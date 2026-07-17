@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generando Certificado...</title>
+    <!-- Importamos jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; background-color: #f8fafc; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #004899; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="loader"></div>
+    <h2 style="color: #004899;">Generando tu certificado ITCA...</h2>
+    <p>La descarga comenzará automáticamente en unos segundos.</p>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Configuración de tu base de datos de Firebase
+        const firebaseConfig = {
+            databaseURL: "https://user-itcaacademy2-0-default-rtdb.firebaseio.com/"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Extraemos los datos que Unity envió por la URL
+        const params = new URLSearchParams(window.location.search);
+        const cedula = params.get('cedula');
+        const moduloId = params.get('modulo');
+
+        if(cedula && moduloId) {
+            buscarYGenerarCertificado(cedula, moduloId);
+        } else {
+            document.body.innerHTML = "<h2 style='color:red;'>Error: Faltan datos en la URL de solicitud.</h2>";
+        }
+
+        async function buscarYGenerarCertificado(cedulaEstudiante, idModuloTarget) {
+            try {
+                // Buscamos todas las evaluaciones de este estudiante
+                const resultadosRef = query(ref(db, 'resultados_evaluaciones'), orderByChild('usuarioId'), equalTo(cedulaEstudiante));
+                const snapshot = await get(resultadosRef);
+
+                if (!snapshot.exists()) {
+                    document.body.innerHTML = "<h2>No se encontraron evaluaciones registradas para tu usuario.</h2>";
+                    return;
+                }
+
+                let mejorNota = -1;
+                let datosFinales = null;
+
+                // Buscamos la nota más alta para este módulo específico
+                snapshot.forEach(doc => {
+                    const data = doc.val();
+                    if (data.moduloId === idModuloTarget && data.nota > mejorNota) {
+                        mejorNota = data.nota;
+                        datosFinales = data;
+                    }
+                });
+
+                if (datosFinales) {
+                    // Consultamos el nombre real del módulo
+                    const moduloSnap = await get(ref(db, `modulos/${idModuloTarget}`));
+                    const nombreModulo = moduloSnap.exists() ? moduloSnap.val().nombre : "Módulo de Realidad Aumentada";
+
+                    // Consultamos el nombre real del estudiante (nombre y apellido)
+                    const usuarioSnap = await get(ref(db, `Usuarios/${cedulaEstudiante}`));
+                    let nombreEstudiante = "ESTUDIANTE";
+                    
+                    if (usuarioSnap.exists()) {
+                        const infoUsr = usuarioSnap.val();
+                        const nombre = infoUsr.nombre || infoUsr.Nombre || infoUsr.nombres || "";
+                        const apellido = infoUsr.apellido || infoUsr.Apellido || infoUsr.apellidos || "";
+                        nombreEstudiante = `${nombre} ${apellido}`.trim();
+                    }
+                    
+                    // Convertimos la imagen de fondo de tus assets a Base64
+                    const base64Fondo = await imageToBase64('./assets/fondo_certificado.jpeg');
+                    
+                    // Generamos el PDF
+                    armarPDF(nombreEstudiante, nombreModulo, datosFinales.nota, datosFinales.fecha, base64Fondo, cedulaEstudiante);
+                } else {
+                    document.body.innerHTML = "<h2>No tienes evaluaciones registradas para este módulo.</h2>";
+                }
+
+            } catch (error) {
+                console.error(error);
+                document.body.innerHTML = "<h2>Error al conectar con la base de datos de certificados.</h2>";
+            }
+        }
+
+        function armarPDF(nombre, modulo, nota, fecha, base64Fondo, cedula) {
+            const { jsPDF } = window.jspdf;
+            const docPDF = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            
+            const width = docPDF.internal.pageSize.getWidth();
+            const height = docPDF.internal.pageSize.getHeight();
+            const centroDerechoX = (width * 0.73);
+
+            // Dibujamos el fondo oficial
+            docPDF.addImage(base64Fondo, 'JPEG', 0, 0, width, height);
+
+            docPDF.setFont("helvetica", "bold");
+            docPDF.setFontSize(28); 
+            docPDF.setTextColor(0, 72, 153); 
+            docPDF.text("ITCA ACADEMY 2.0", centroDerechoX, 35, { align: "center" });
+
+            docPDF.setFontSize(14);
+            docPDF.setTextColor(100);
+            docPDF.text("CENTRO DE CAPACITACIÓN", centroDerechoX, 42, { align: "center" });
+            docPDF.text("TECNOLÓGICA", centroDerechoX, 47, { align: "center" });
+
+            docPDF.setFontSize(20);
+            docPDF.setTextColor(40);
+            docPDF.text("CERTIFICADO DE APROBACIÓN", centroDerechoX, 70, { align: "center" });
+
+            docPDF.setFont("helvetica", "normal");
+            docPDF.setFontSize(13);
+            docPDF.text("Se otorga el presente reconocimiento a:", centroDerechoX, 85, { align: "center" });
+
+            // Nombre y Apellido
+            docPDF.setFont("helvetica", "bold");
+            docPDF.setFontSize(26);
+            docPDF.setTextColor(0, 0, 0);
+            docPDF.text(nombre.toUpperCase(), centroDerechoX, 103, { align: "center" }); 
+            
+            // Cédula
+            docPDF.setFont("helvetica", "normal");
+            docPDF.setFontSize(12);
+            docPDF.setTextColor(80);
+            docPDF.text(`Con documento de identidad (C.I.): ${cedula}`, centroDerechoX, 111, { align: "center" });
+
+            // Contenido
+            docPDF.setFont("helvetica", "normal");
+            docPDF.setFontSize(13);
+            docPDF.setTextColor(60);
+            docPDF.text(`Por haber aprobado satisfactoriamente`, centroDerechoX, 122, { align: "center" });
+            docPDF.text(`la evaluación del módulo:`, centroDerechoX, 127, { align: "center" });
+            
+            docPDF.setFont("helvetica", "bold");
+            const splitModulo = docPDF.splitTextToSize(`"${modulo}"`, 110); 
+            docPDF.text(splitModulo, centroDerechoX, 137, { align: "center" });
+
+            // Nota
+            const notaNumerica = parseFloat(nota);
+            docPDF.text(`Calificación: ${notaNumerica.toFixed(2)}/10`, centroDerechoX, 152, { align: "center" });
+
+            // Fecha
+            const fechaFormateada = new Date(fecha).toLocaleDateString();
+            docPDF.setFontSize(11);
+            docPDF.text(`Ibarra, Imbabura - ${fechaFormateada}`, centroDerechoX, 167, { align: "center" });
+
+            // Firmas
+            const firmaIzqX = centroDerechoX - 35; 
+            const firmaDerX = centroDerechoX + 35; 
+            docPDF.setDrawColor(0); 
+            docPDF.setLineWidth(0.4);
+            docPDF.line(firmaIzqX - 25, 185, firmaIzqX + 25, 185); 
+            docPDF.text("Coordinación ITCA", firmaIzqX, 191, { align: "center" });
+            docPDF.line(firmaDerX - 25, 185, firmaDerX + 25, 185);
+            docPDF.text("Instructor Responsable", firmaDerX, 191, { align: "center" });
+
+            docPDF.setTextColor(60);
+            docPDF.setFontSize(9);
+            const splitPie = docPDF.splitTextToSize("Este certificado es válido como registro de actividad académica en la plataforma ITCA Academy.", 120);
+            docPDF.text(splitPie, centroDerechoX, height - 12, { align: "center" });
+
+            // DESCARGA EL PDF AUTOMÁTICAMENTE
+            docPDF.save(`Certificado_${modulo}_ITCA.pdf`);
+            
+            document.querySelector("h2").innerText = "¡Descarga Completada!";
+            document.querySelector(".loader").style.display = "none";
+        }
+
+        async function imageToBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; 
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/jpeg')); 
+                };
+                img.onerror = (error) => reject(error);
+                img.src = url;
+            });
+        }
+    </script>
+</body>
+</html>
