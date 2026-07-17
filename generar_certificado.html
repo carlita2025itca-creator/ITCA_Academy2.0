@@ -46,57 +46,50 @@
             document.body.innerHTML = "<h2 style='color:red;'>Error: Faltan datos en la URL de solicitud.</h2>";
         }
 
-        async function buscarYGenerarCertificado(cedulaEstudiante, idModuloTarget) {
+       async function buscarYGenerarCertificado(cedulaEstudiante, idModuloTarget) {
             try {
-                // Buscamos todas las evaluaciones de este estudiante
-                const resultadosRef = query(ref(db, 'resultados_evaluaciones'), orderByChild('usuarioId'), equalTo(cedulaEstudiante));
+                // Leemos toda la tabla para encontrar el registro manualmente
+                const resultadosRef = ref(db, 'resultados_evaluaciones');
                 const snapshot = await get(resultadosRef);
 
                 if (!snapshot.exists()) {
-                    document.body.innerHTML = "<h2>No se encontraron evaluaciones registradas para tu usuario.</h2>";
+                    document.body.innerHTML = "<h2>No hay registros en la base de datos.</h2>";
                     return;
                 }
 
-                let mejorNota = -1;
                 let datosFinales = null;
 
-                // Buscamos la nota más alta para este módulo específico
+                // Buscamos el registro que coincida con la cédula y el módulo
                 snapshot.forEach(doc => {
                     const data = doc.val();
-                    if (data.moduloId === idModuloTarget && data.nota > mejorNota) {
-                        mejorNota = data.nota;
+                    // Comparamos usando .toString() para evitar errores de tipo
+                    if (data.usuarioId.toString() === cedulaEstudiante.toString() && data.moduloId === idModuloTarget) {
                         datosFinales = data;
                     }
                 });
 
                 if (datosFinales) {
-                    // Consultamos el nombre real del módulo
+                    // Si encontramos los datos, procedemos a generar el PDF
                     const moduloSnap = await get(ref(db, `modulos/${idModuloTarget}`));
                     const nombreModulo = moduloSnap.exists() ? moduloSnap.val().nombre : "Módulo de Realidad Aumentada";
 
-                    // Consultamos el nombre real del estudiante (nombre y apellido)
                     const usuarioSnap = await get(ref(db, `Usuarios/${cedulaEstudiante}`));
                     let nombreEstudiante = "ESTUDIANTE";
                     
                     if (usuarioSnap.exists()) {
                         const infoUsr = usuarioSnap.val();
-                        const nombre = infoUsr.nombre || infoUsr.Nombre || infoUsr.nombres || "";
-                        const apellido = infoUsr.apellido || infoUsr.Apellido || infoUsr.apellidos || "";
-                        nombreEstudiante = `${nombre} ${apellido}`.trim();
+                        nombreEstudiante = `${infoUsr.nombre || infoUsr.Nombre || ""} ${infoUsr.apellido || infoUsr.Apellido || ""}`.trim();
                     }
                     
-                    // Convertimos la imagen de fondo de tus assets a Base64
                     const base64Fondo = await imageToBase64('./assets/fondo_certificado.jpeg');
-                    
-                    // Generamos el PDF
                     armarPDF(nombreEstudiante, nombreModulo, datosFinales.nota, datosFinales.fecha, base64Fondo, cedulaEstudiante);
                 } else {
-                    document.body.innerHTML = "<h2>No tienes evaluaciones registradas para este módulo.</h2>";
+                    document.body.innerHTML = `<h2>No encontramos resultados para la cédula ${cedulaEstudiante} en este módulo.</h2>`;
                 }
 
             } catch (error) {
                 console.error(error);
-                document.body.innerHTML = "<h2>Error al conectar con la base de datos de certificados.</h2>";
+                document.body.innerHTML = "<h2>Error al conectar con la base de datos. Revisa la consola.</h2>";
             }
         }
 
