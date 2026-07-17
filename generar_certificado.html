@@ -18,15 +18,22 @@
     <p>La descarga comenzará automáticamente en unos segundos.</p>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, query, orderByChild, equalTo, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Configuración de tu base de datos de Firebase
-        const firebaseConfig = {
-            databaseURL: "https://user-itcaacademy2-0-default-rtdb.firebaseio.com/"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    // USA ESTOS DATOS EXACTOS QUE YA TIENES EN TU FIREBASE-CONFIG.JS
+    const firebaseConfig = {
+        apiKey: "AIzaSyCKLT4vWDt3oStw9rF6eT0ngRrpVamanjc",
+        authDomain: "itcaacademy2-0.firebaseapp.com",
+        databaseURL: "https://user-itcaacademy2-0-default-rtdb.firebaseio.com/",
+        projectId: "itcaacademy2-0",
+        storageBucket: "itcaacademy2-0.firebasestorage.app",
+        messagingSenderId: "100451769928",
+        appId: "1:100451769928:web:b9e79e8e7a1c90cb9a427d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
         // Extraemos los datos que Unity envió por la URL
         const params = new URLSearchParams(window.location.search);
