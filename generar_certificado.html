@@ -83,7 +83,7 @@
                 }
             });
 
-            if (datosFinales && notaMasAlta >= 7.0) { 
+        if (datosFinales && notaMasAlta >= 7.0) { 
                 
                 const moduloSnap = await get(ref(db, `modulos/${idModuloTarget}`));
                 const nombreModulo = moduloSnap.exists() ? moduloSnap.val().nombre : "Módulo de Realidad Aumentada";
@@ -100,15 +100,18 @@
                 armarPDF(nombreEstudiante, nombreModulo, datosFinales.nota, datosFinales.fecha, base64Fondo, cedulaEstudiante);
                 
             } else {
-                mostrarError("No se encontró un examen POST aprobado (Nota mínima: 7.0).", 
-                             `<b>Cédula buscada:</b> ${reqCedula} <br> 
-                              <b>Módulo buscado:</b> ${reqModulo} <br><br> 
-                              <b>Reporte interno:</b><ul>${logBusqueda || "<li>No hay ninguna sesión para este alumno.</li>"}</ul>`);
+                // Mensaje amigable y claro para el estudiante
+                mostrarError("¡Hola! Aún no cumples con el requisito para descargar este certificado.", 
+                             `Recuerda que necesitas una nota mínima de <b>7.0 / 10</b> en la evaluación POST del módulo.<br><br>
+                              <b>Detalles de tu consulta:</b><br>
+                              • Cédula: ${reqCedula}<br>
+                              • Módulo: ${reqModulo}<br><br>
+                              <b>Estado actual:</b><ul>${logBusqueda || "<li>No encontramos un registro de examen completado todavía. ¡Ánimo, tú puedes!</li>"}</ul>`);
             }
 
         } catch (error) {
             console.error(error);
-            mostrarError("Error técnico al conectar con Firebase.", error.message);
+            mostrarError("¡Vaya! Tuvimos un pequeño inconveniente de conexión.", "Por favor, verifica que tengas conexión a internet y vuelve a intentarlo en un momento.");
         }
     }
 
