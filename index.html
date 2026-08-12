@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Librería para Alertas Modernas (SweetAlert2) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Librería para Comprimir Imágenes antes de subir a Firebase -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
 </head>
 
 <body>
@@ -51,7 +55,7 @@
                 <button class="nav-item" data-target="view-users"><i class="fas fa-users"></i> Usuarios</button>
 
                 <button class="nav-item" data-target="view-modules"><i class="fas fa-cogs"></i> Config. Módulos</button>
-              
+
                 </button>
                 <button class="nav-item" data-target="view-certificates">
                     <i class="fas fa-certificate"></i> Reportes
@@ -62,7 +66,7 @@
                 <button class="nav-item" data-target="view-analytics">
                     <i class="fas fa-chart-line"></i> Estadísticas de Módulos
                 </button>
-                  <button class="nav-item" data-target="view-history"><i class="fas fa-history"></i> Historial cambios
+                <button class="nav-item" data-target="view-history"><i class="fas fa-history"></i> Historial cambios
 
 
             </nav>
@@ -293,6 +297,8 @@
                                 <table class="data-table">
                                     <thead>
                                         <tr>
+                                            <th style="width: 60px; text-align: center;">Portada</th>
+                                            <!-- Nueva columna -->
                                             <th>ID</th>
                                             <th>Módulo</th>
                                             <th style="text-align: center;">Preguntas asignadas para evaluación</th>
@@ -488,6 +494,35 @@
                                 <label>Descripción / Objetivo</label>
                                 <textarea id="mod-desc" placeholder="¿De qué trata este nivel?"></textarea>
                             </div>
+                            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+                            <div class="form-group">
+                                <label for="mod-key-addressable">
+                                    <i class="fas fa-cube"></i> Key del Addressable (Escena en Unity):
+                                </label>
+                                <input type="text" id="mod-key-addressable" required placeholder="Ej. 2_Escena_AR">
+                            </div>
+
+                           <div class="form-group">
+    <!-- IMAGEN 1: PORTADA -->
+    <label for="mod-imagen">
+        <i class="fas fa-image"></i> Imagen de Portada de la Tarjeta (.png, .jpg):
+    </label>
+    <input type="file" id="mod-imagen" accept="image/png, image/jpeg" required>
+    <small style="color: #64748b; font-size: 0.8rem; display: block; margin-bottom: 10px;">
+        Esta imagen se mostrará en la tarjeta del menú principal.
+    </small>
+
+    <!-- IMAGEN 2: CARGA AR -->
+    <label for="mod-imagen-carga">
+        <i class="fas fa-spinner"></i> Imagen de Carga (Escena AR) (.png, .jpg):
+    </label>
+    <!-- Le agregamos "required" porque JS lo va a pedir -->
+    <input type="file" id="mod-imagen-carga" accept="image/png, image/jpeg" required> 
+    <small style="color: #64748b; font-size: 0.8rem;">
+        Esta imagen aparecerá de fondo mientras se descarga el modelo 3D en Unity.
+    </small>
+</div>
 
                             <div class="form-group">
                                 <label>Cantidad de preguntas en la evaluación:</label>
@@ -584,6 +619,30 @@
                                 <label>Descripción / Objetivo</label>
                                 <textarea id="edit-mod-desc"></textarea>
                             </div>
+                            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #e2e8f0;">
+
+                            <div class="form-group">
+                                <label for="edit-mod-key-addressable">
+                                    <i class="fas fa-cube"></i> Key del Addressable (Escena en Unity):
+                                </label>
+                                <input type="text" id="edit-mod-key-addressable" required>
+                            </div>
+
+                            <div class="form-group">
+    <label for="edit-mod-imagen">
+        <i class="fas fa-image"></i> Imagen de Portada (.png, .jpg):
+    </label>
+    <input type="file" id="edit-mod-imagen" accept="image/png, image/jpeg">
+    <!-- 👇 ESTE DIV ES EL QUE FALTA O NO LO ENCUENTRA JS 👇 -->
+    <div id="preview-portada" style="margin-top: 8px; margin-bottom: 15px; font-size: 0.9em;"></div>
+
+    <label for="edit-mod-imagen-carga">
+        <i class="fas fa-spinner"></i> Imagen de Carga AR (.png, .jpg):
+    </label>
+    <input type="file" id="edit-mod-imagen-carga" accept="image/png, image/jpeg">
+    <!-- 👇 Y ESTE TAMBIÉN 👇 -->
+    <div id="preview-carga" style="margin-top: 8px; font-size: 0.9em;"></div>
+</div>
 
                             <div class="form-group">
                                 <label>Cantidad de preguntas en la evaluación:</label>
@@ -850,65 +909,80 @@
                         </table>
                     </div>
                 </section>
-              <!-- ========================================== -->
-<!-- MODAL: CREADOR DINÁMICO DE CUESTIONARIOS   -->
-<!-- ========================================== -->
-<div id="modal-tam"
-    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
+                <!-- ========================================== -->
+                <!-- MODAL: CREADOR DINÁMICO DE CUESTIONARIOS   -->
+                <!-- ========================================== -->
+                <div id="modal-tam"
+                    style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
 
-    <div style="background-color: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative;">
+                    <div
+                        style="background-color: white; padding: 25px; border-radius: 10px; width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.2); position: relative;">
 
-        <span id="btn-cerrar-modal-tam" style="position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #64748b;">&times;</span>
+                        <span id="btn-cerrar-modal-tam"
+                            style="position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: #64748b;">&times;</span>
 
-        <h2 style="margin-top: 0; color: #004899; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; flex-shrink: 0;">
-            <i class="fas fa-layer-group"></i> Constructor de Evaluaciones
-        </h2>
+                        <h2
+                            style="margin-top: 0; color: #004899; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; flex-shrink: 0;">
+                            <i class="fas fa-layer-group"></i> Constructor de Evaluaciones
+                        </h2>
 
-        <!-- NUEVA SECCIÓN: Configuración de Limite de Preguntas para Unity -->
-        <div class="tam-config-panel" style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 15px; flex-shrink: 0;">
-            <h4 style="margin: 0 0 10px 0; color: #334155; font-size: 0.95rem;">
-                <i class="fas fa-sliders-h" style="color: #004899;"></i> Modo de Despliegue en Unity
-            </h4>
-            
-            <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-                <!-- Selector de Modo -->
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label for="select-modo-preguntas" style="font-size: 0.85rem; font-weight: bold; color: #64748b;">Modalidad:</label>
-                    <select id="select-modo-preguntas" style="padding: 8px 12px; border-radius: 5px; border: 1px solid #cbd5e1; background-color: white; color: #1e293b; font-weight: 500;">
-                        <option value="todas">Mostrar todas las preguntas</option>
-                        <option value="limite">Cuestionario aleatorio (Límite por cantidad)</option>
-                    </select>
+                        <!-- NUEVA SECCIÓN: Configuración de Limite de Preguntas para Unity -->
+                        <div class="tam-config-panel"
+                            style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 15px; flex-shrink: 0;">
+                            <h4 style="margin: 0 0 10px 0; color: #334155; font-size: 0.95rem;">
+                                <i class="fas fa-sliders-h" style="color: #004899;"></i> Modo de Despliegue en Unity
+                            </h4>
+
+                            <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                                <!-- Selector de Modo -->
+                                <div style="display: flex; flex-direction: column; gap: 5px;">
+                                    <label for="select-modo-preguntas"
+                                        style="font-size: 0.85rem; font-weight: bold; color: #64748b;">Modalidad:</label>
+                                    <select id="select-modo-preguntas"
+                                        style="padding: 8px 12px; border-radius: 5px; border: 1px solid #cbd5e1; background-color: white; color: #1e293b; font-weight: 500;">
+                                        <option value="todas">Mostrar todas las preguntas</option>
+                                        <option value="limite">Cuestionario aleatorio (Límite por cantidad)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Input Numérico (se oculta/desactiva dinámicamente) -->
+                                <div id="wrapper-limite-preguntas"
+                                    style="display: flex; flex-direction: column; gap: 5px; opacity: 0.5; pointer-events: none;">
+                                    <label for="input-limite-preguntas"
+                                        style="font-size: 0.85rem; font-weight: bold; color: #64748b;">Cantidad de
+                                        preguntas:</label>
+                                    <input type="number" id="input-limite-preguntas" min="1" value="5"
+                                        placeholder="Ej. 10" disabled
+                                        style="padding: 7px 10px; width: 120px; border-radius: 5px; border: 1px solid #cbd5e1; font-weight: bold;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contenedor donde JS inyectará las categorías dinámicamente -->
+                        <div id="contenedor-categorias"
+                            style="overflow-y: auto; padding-right: 10px; flex-grow: 1; margin-bottom: 20px;">
+                            <!-- Las categorías aparecerán aquí -->
+                        </div>
+
+                        <!-- Botones de Acción Globales -->
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #e2e8f0; padding-top: 15px; flex-shrink: 0;">
+                            <button id="btn-agregar-categoria"
+                                style="padding: 10px 15px; background-color: #166534; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                                <i class="fas fa-plus"></i> Nueva Categoría
+                            </button>
+
+                            <div style="display: flex; gap: 10px;">
+                                <button id="btn-cancelar-modal-tam"
+                                    style="padding: 10px 15px; background-color: #e2e8f0; color: #475569; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                                <button id="btn-guardar-preguntas"
+                                    style="padding: 10px 15px; background-color: #004899; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                                    <i class="fas fa-save"></i> Guardar Todo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Input Numérico (se oculta/desactiva dinámicamente) -->
-                <div id="wrapper-limite-preguntas" style="display: flex; flex-direction: column; gap: 5px; opacity: 0.5; pointer-events: none;">
-                    <label for="input-limite-preguntas" style="font-size: 0.85rem; font-weight: bold; color: #64748b;">Cantidad de preguntas:</label>
-                    <input type="number" id="input-limite-preguntas" min="1" value="5" placeholder="Ej. 10" disabled
-                        style="padding: 7px 10px; width: 120px; border-radius: 5px; border: 1px solid #cbd5e1; font-weight: bold;">
-                </div>
-            </div>
-        </div>
-
-        <!-- Contenedor donde JS inyectará las categorías dinámicamente -->
-        <div id="contenedor-categorias" style="overflow-y: auto; padding-right: 10px; flex-grow: 1; margin-bottom: 20px;">
-            <!-- Las categorías aparecerán aquí -->
-        </div>
-
-        <!-- Botones de Acción Globales -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #e2e8f0; padding-top: 15px; flex-shrink: 0;">
-            <button id="btn-agregar-categoria" style="padding: 10px 15px; background-color: #166534; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                <i class="fas fa-plus"></i> Nueva Categoría
-            </button>
-
-            <div style="display: flex; gap: 10px;">
-                <button id="btn-cancelar-modal-tam" style="padding: 10px 15px; background-color: #e2e8f0; color: #475569; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Cancelar</button>
-                <button id="btn-guardar-preguntas" style="padding: 10px 15px; background-color: #004899; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                    <i class="fas fa-save"></i> Guardar Todo
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
             </div>
         </main>
