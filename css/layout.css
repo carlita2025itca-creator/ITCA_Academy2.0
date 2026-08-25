@@ -1,0 +1,366 @@
+/* layout.css */
+/* Control de Pantallas */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; }
+.view-section { display: none; }
+.view-section.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+
+/* Dashboard Layout */
+#dashboard-screen { display: none; grid-template-columns: 250px 1fr; }
+#dashboard-screen.active { display: grid; }
+
+
+/* Main Content */
+.main-content { display: flex; flex-direction: column; height: 100vh; overflow-y: auto; }
+.topbar { background: var(--bg-card); padding: 1.2rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+.topbar h2 { font-size: 1.2rem; font-weight: 500; color: var(--text-dark); }
+.user-profile { font-size: 0.9rem; color: var(--text-muted); background: var(--bg-main); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color); }
+.content-wrapper { padding: 2rem; }
+.view-section h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--itca-blue); }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    #dashboard-screen { grid-template-columns: 1fr; }
+    #dashboard-screen.active { display: block; }
+    .sidebar { display: none; }
+    .content-wrapper { padding: 1rem; }
+}
+/* --- SIDEBAR (Tema Claro para resaltar el Logo) --- */
+.sidebar { 
+    background: var(--bg-card); /* Fondo blanco */
+    color: var(--text-dark); /* Texto oscuro */
+    display: flex; 
+    flex-direction: column; 
+    /* Cambiamos la sombra y agregamos un borde sutil para separarlo del contenido */
+    box-shadow: 2px 0 10px rgba(0,0,0,0.03);
+    border-right: 1px solid var(--border-color);
+}
+
+.sidebar-header { 
+    padding: 1.5rem; 
+    text-align: center; 
+    /* Borde inferior gris claro */
+    border-bottom: 1px solid var(--border-color); 
+}
+
+/* Si aún tienes el texto h3, lo ponemos en Azul ITCA */
+.sidebar-header h3 {
+    color: var(--itca-blue); 
+    letter-spacing: 1px;
+}
+
+/* Si pusiste la imagen de tu logo, esto asegura que no se desborde */
+.sidebar-header img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.sidebar-nav { 
+    flex: 1; 
+    padding: 1rem 0; 
+}
+
+.nav-item { 
+    width: 100%; 
+    padding: 1rem 1.5rem; 
+    text-align: left; 
+    background: none; 
+    border: none; 
+    /* Color de texto gris oscuro (apagado) para los inactivos */
+    color: var(--text-muted); 
+    cursor: pointer; 
+    font-size: 0.95rem; 
+    font-weight: 500;
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    transition: all 0.2s; 
+    border-left: 4px solid transparent;
+}
+
+/* Al pasar el mouse o estar activo, resaltamos con Azul y borde Verde */
+.nav-item:hover, .nav-item.active { 
+    /* Fondo azul ITCA muy transparente */
+    background: rgba(0, 72, 153, 0.05); 
+    /* Texto azul ITCA */
+    color: var(--itca-blue); 
+    /* Borde izquierdo Verde ITCA */
+    border-left: 4px solid var(--itca-green); 
+}
+
+.nav-item i {
+    font-size: 1.1rem;
+}
+
+.sidebar-footer { 
+    padding: 1rem; 
+    /* Borde superior gris claro */
+    border-top: 1px solid var(--border-color); 
+}
+
+.btn-logout { 
+    width: 100%; 
+    padding: 0.75rem; 
+    background: transparent; 
+    color: var(--danger); 
+    border: 1px solid rgba(220, 38, 38, 0.2); /* Borde rojo suave */
+    border-radius: 4px; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px; 
+    transition: 0.2s;
+    font-weight: 500;
+}
+
+.btn-logout:hover { 
+    background: rgba(220, 38, 38, 0.1); 
+    border-color: var(--danger);
+}
+/* --- BOTÓN DE OPCIONES Y MENÚ DESPLEGABLE --- */
+.dropdown-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* El botón principal que dice "Opciones" */
+.btn-opciones-main {
+    background-color: white;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-opciones-main:hover {
+    border-color: #004899; /* Tu azul ITCA */
+    color: #004899;
+    background-color: #f8fafc;
+}
+
+/* La lista que se desplaza hacia abajo */
+.dropdown-menu {
+    display: none; /* Oculto inicialmente */
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: white;
+    min-width: 170px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    margin-top: 5px;
+    overflow: hidden;
+    text-align: left;
+}
+
+.dropdown-menu.show {
+    display: block; /* Clase que activa Javascript para mostrarlo */
+}
+
+/* Cada opción dentro de la lista */
+.dropdown-menu a {
+    color: #334155;
+    padding: 10px 14px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.dropdown-menu a:hover {
+    background-color: #f8fafc;
+    color: #004899;
+}
+
+/* Opción de eliminar en rojo */
+.dropdown-menu a.action-danger {
+    color: #ef4444;
+}
+
+.dropdown-menu a.action-danger:hover {
+    background-color: #fef2f2;
+}
+
+/* --- BOTÓN PRINCIPAL DE ACCIÓN (btn-save) --- */
+.btn-save {
+    background-color: #004899; /* Azul principal ITCA */
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    
+    /* Flexbox para alinear el ícono de FontAwesome y el texto */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; 
+    
+    /* Efectos de transición suaves */
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 72, 153, 0.2);
+}
+
+/* Efecto al pasar el mouse por encima */
+.btn-save:hover {
+    background-color: #003675; /* Tono azul más oscuro */
+    box-shadow: 0 4px 8px rgba(0, 72, 153, 0.3);
+    transform: translateY(-2px); /* Ligero efecto de elevación */
+}
+
+/* Efecto al hacer clic (presionado) */
+.btn-save:active {
+    transform: translateY(0); /* Vuelve a su posición original */
+    box-shadow: 0 1px 2px rgba(0, 72, 153, 0.2);
+}
+
+/* Ajuste sutil para el ícono */
+.btn-save i {
+    font-size: 1.05rem; 
+}
+/* ==========================================
+   ESTILOS PARA FORMULARIOS Y CAMPOS DE TEXTO
+   ========================================== */
+
+/* Contenedor de cada campo (etiqueta + input) */
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+/* Estilo para las etiquetas (Labels) */
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.4rem;
+}
+
+/* Estilo principal para Inputs y Textareas */
+.form-group input[type="text"],
+.form-group input[type="hidden"],
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    color: #334155;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    box-sizing: border-box; /* Evita que el padding rompa el ancho del 100% */
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+/* Área de texto específica para la descripción */
+.form-group textarea {
+    resize: vertical; /* Permite estirar la caja solo hacia abajo */
+    min-height: 80px;
+}
+
+/* EFECTO FOCUS: Cuando el usuario hace clic para escribir */
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #004899; /* Azul ITCA */
+    box-shadow: 0 0 0 3px rgba(0, 72, 153, 0.15); /* Resplandor azul suave */
+}
+
+/* EFECTO DISABLED: Para campos que no se pueden editar (Como el ID Técnico) */
+.form-group input[type="text"]:disabled {
+    background-color: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    
+}
+
+/* --- ESTILOS DEL MENÚ DE PERFIL --- */
+.user-profile-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.user-info-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.user-info-btn:hover {
+    background: #f1f5f9;
+}
+
+.profile-circle {
+    width: 35px;
+    height: 35px;
+    background-color: var(--itca-blue, #004494);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+#topbar-user-name {
+    font-weight: 600;
+    color: #334155;
+}
+
+.dropdown-menu-profile {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    top: 110%;
+    right: 0;
+    background: white;
+    min-width: 200px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    z-index: 1000;
+    padding: 8px 0;
+}
+
+.dropdown-menu-profile.active {
+    display: block; /* Clase para mostrarlo con JS */
+}
+
+.dropdown-menu-profile button {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dropdown-menu-profile button:hover {
+    background-color: #f8fafc;
+}
