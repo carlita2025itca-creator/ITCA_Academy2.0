@@ -46,72 +46,54 @@
         mostrarError("Faltan datos en la URL.", "Asegúrate de abrir esto desde la app de Unity.");
     }
 
-    async function buscarYGenerarCertificado(cedulaEstudiante, idModuloTarget) {
+   async function buscarYGenerarCertificado(cedulaEstudiante, idModuloTarget) {
         try {
-            const resultadosRef = ref(db, 'certificados_obtenidos'); 
-            const snapshot = await get(resultadosRef);
-
-            if (!snapshot.exists()) {
-                mostrarError("La carpeta 'certificados_obtenidos' no existe en Firebase.", "Si ves esto, estás leyendo una versión en caché del navegador. Por favor abre esta pestaña en Modo Incógnito.");
-                return;
-            }
-
-            let datosFinales = null;
-            let notaMasAlta = -1;
-            let logBusqueda = "";
-
             const reqCedula = cedulaEstudiante.toString().trim();
             const reqModulo = idModuloTarget.toString().trim().toUpperCase();
 
-            snapshot.forEach(doc => {
-                const sessionData = doc.val();
-                const sCedula = sessionData.usuarioId ? sessionData.usuarioId.toString().trim() : "N/A";
-                const sModulo = sessionData.moduloId ? sessionData.moduloId.toString().trim().toUpperCase() : "N/A";
-                
-                if (sCedula === reqCedula && sModulo === reqModulo) {
-                    logBusqueda += `<li>✅ Sesión encontrada. `;
-                    if (sessionData.POST) {
-                        const notaPOST = parseFloat(sessionData.POST.nota);
-                        logBusqueda += `(Nota POST: ${notaPOST})</li>`;
-                        if (notaPOST > notaMasAlta) {
-                            notaMasAlta = notaPOST;
-                            datosFinales = sessionData.POST; 
-                        }
-                    } else {
-                        logBusqueda += `(Pero no tiene examen POST adentro)</li>`;
+            // 1. Buscamos directamente la nota en la ruta exacta del usuario y módulo
+            const certificadoRef = ref(db, `certificados_obtenidos/${reqCedula}/${reqModulo}`); 
+            const snapshot = await get(certificadoRef);
+
+            if (snapshot.exists()) {
+                // El valor que nos devuelve es directamente el número (ej: 10 o 8)
+                const notaFinal = parseFloat(snapshot.val()); 
+
+                if (notaFinal >= 7.0) { 
+                    
+                    // 2. Obtener el nombre del Módulo
+                    const moduloSnap = await get(ref(db, `modulos/${idModuloTarget}`));
+                    const nombreModulo = moduloSnap.exists() ? moduloSnap.val().nombre : reqModulo;
+
+                    // 3. Obtener el nombre del Estudiante
+                    const usuarioSnap = await get(ref(db, `Usuarios/${reqCedula}`));
+                    let nombreEstudiante = "ESTUDIANTE";
+                    if (usuarioSnap.exists()) {
+                        const infoUsr = usuarioSnap.val();
+                        nombreEstudiante = `${infoUsr.nombre || infoUsr.Nombre || ""} ${infoUsr.apellido || infoUsr.Apellido || ""}`.trim();
                     }
-                }
-            });
 
-        if (datosFinales && notaMasAlta >= 7.0) { 
-                
-                const moduloSnap = await get(ref(db, `modulos/${idModuloTarget}`));
-                const nombreModulo = moduloSnap.exists() ? moduloSnap.val().nombre : "Módulo de Realidad Aumentada";
-
-                const usuarioSnap = await get(ref(db, `Usuarios/${cedulaEstudiante}`));
-                let nombreEstudiante = "ESTUDIANTE";
-                
-                if (usuarioSnap.exists()) {
-                    const infoUsr = usuarioSnap.val();
-                    nombreEstudiante = `${infoUsr.nombre || infoUsr.Nombre || ""} ${infoUsr.apellido || infoUsr.Apellido || ""}`.trim();
+                    // 4. Como la tabla solo guarda la nota, usamos la fecha actual para el PDF
+                    const fechaActual = new Date().toISOString();
+                    
+                    // ¡OJO AQUÍ! Asegúrate de que tu imagen se llame exactamente así en la carpeta assets (.jpeg o .jpg)
+                    const base64Fondo = await imageToBase64('./assets/fondo_certificado.jpeg');
+                    
+                    // 5. Generar PDF
+                    armarPDF(nombreEstudiante, nombreModulo, notaFinal, fechaActual, base64Fondo, reqCedula);
+                    
+                } else {
+                    mostrarError("No cumples con el puntaje mínimo", 
+                        `Tu calificación es de <b>${notaFinal}/10</b>.<br>Necesitas al menos 7.0 para descargar el certificado.`);
                 }
-                
-                const base64Fondo = await imageToBase64('./assets/fondo_certificado.jpeg');
-                armarPDF(nombreEstudiante, nombreModulo, datosFinales.nota, datosFinales.fecha, base64Fondo, cedulaEstudiante);
-                
             } else {
-                // Mensaje amigable y claro para el estudiante
-                mostrarError("¡Hola! Aún no cumples con el requisito para descargar este certificado.", 
-                             `Recuerda que necesitas una nota mínima de <b>7.0 / 10</b> en la evaluación POST del módulo.<br><br>
-                              <b>Detalles de tu consulta:</b><br>
-                              • Cédula: ${reqCedula}<br>
-                              • Módulo: ${reqModulo}<br><br>
-                              <b>Estado actual:</b><ul>${logBusqueda || "<li>No encontramos un registro de examen completado todavía. ¡Ánimo, tú puedes!</li>"}</ul>`);
+                mostrarError("Certificado no encontrado", 
+                    `No encontramos un registro aprobado para la cédula <b>${reqCedula}</b> en el módulo <b>${reqModulo}</b>.`);
             }
 
         } catch (error) {
-            console.error(error);
-            mostrarError("¡Vaya! Tuvimos un pequeño inconveniente de conexión.", "Por favor, verifica que tengas conexión a internet y vuelve a intentarlo en un momento.");
+            console.error("Error real:", error);
+            mostrarError("Error del sistema:", error.message);
         }
     }
 
