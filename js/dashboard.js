@@ -128,7 +128,7 @@ onAuthStateChanged(auth, (user) => {
         actualizarDashboard();
         inicializarMenuPerfil();
     } else {
-        // Redirige si se intenta ingresar sin estar autenticado
-        window.location.href = "index.html";
+        // window.location.href = "login.html"; // <-- LÍNEA COMENTADA (DESACTIVADA)
+        console.log("No hay sesión iniciada, pero no redirigimos para evitar errores.");
     }
 });
