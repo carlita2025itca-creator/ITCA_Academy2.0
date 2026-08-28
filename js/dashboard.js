@@ -129,6 +129,6 @@ onAuthStateChanged(auth, (user) => {
         inicializarMenuPerfil();
     } else {
         // Redirige si se intenta ingresar sin estar autenticado
-        window.location.href = "login.html";
+        window.location.href = "index.html";
     }
 });
