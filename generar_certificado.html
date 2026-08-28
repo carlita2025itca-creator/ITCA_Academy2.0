@@ -6,6 +6,10 @@
     <title>Generando Certificado...</title>
     <!-- Importamos jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- NOTA: Si tienes el archivo JS de tu fuente Karbono para jsPDF, expórtalo e inclúyelo aquí -->
+    <!-- <script src="./assets/Karbono-normal.js"></script> -->
+
     <style>
         body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; background-color: #f8fafc; }
         .loader { border: 5px solid #f3f3f3; border-top: 5px solid #004899; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
@@ -51,21 +55,17 @@
             const reqCedula = cedulaEstudiante.toString().trim();
             const reqModulo = idModuloTarget.toString().trim().toUpperCase();
 
-            // 1. Buscamos directamente la nota en la ruta exacta del usuario y módulo
             const certificadoRef = ref(db, `certificados_obtenidos/${reqCedula}/${reqModulo}`); 
             const snapshot = await get(certificadoRef);
 
             if (snapshot.exists()) {
-                // El valor que nos devuelve es directamente el número (ej: 10 o 8)
                 const notaFinal = parseFloat(snapshot.val()); 
 
                 if (notaFinal >= 7.0) { 
                     
-                    // 2. Obtener el nombre del Módulo
                     const moduloSnap = await get(ref(db, `modulos/${idModuloTarget}`));
                     const nombreModulo = moduloSnap.exists() ? moduloSnap.val().nombre : reqModulo;
 
-                    // 3. Obtener el nombre del Estudiante
                     const usuarioSnap = await get(ref(db, `Usuarios/${reqCedula}`));
                     let nombreEstudiante = "ESTUDIANTE";
                     if (usuarioSnap.exists()) {
@@ -73,13 +73,9 @@
                         nombreEstudiante = `${infoUsr.nombre || infoUsr.Nombre || ""} ${infoUsr.apellido || infoUsr.Apellido || ""}`.trim();
                     }
 
-                    // 4. Como la tabla solo guarda la nota, usamos la fecha actual para el PDF
                     const fechaActual = new Date().toISOString();
-                    
-                    // ¡OJO AQUÍ! Asegúrate de que tu imagen se llame exactamente así en la carpeta assets (.jpeg o .jpg)
                     const base64Fondo = await imageToBase64('./assets/fondo_certificado.jpeg');
                     
-                    // 5. Generar PDF
                     armarPDF(nombreEstudiante, nombreModulo, notaFinal, fechaActual, base64Fondo, reqCedula);
                     
                 } else {
@@ -114,6 +110,7 @@
         const centroDerechoX = (width * 0.73);
 
         docPDF.addImage(base64Fondo, 'JPEG', 0, 0, width, height);
+        
         docPDF.setFont("helvetica", "bold");
         docPDF.setFontSize(28); 
         docPDF.setTextColor(0, 72, 153); 
@@ -132,33 +129,44 @@
         docPDF.setFontSize(13);
         docPDF.text("Se otorga el presente reconocimiento a:", centroDerechoX, 85, { align: "center" });
 
-        docPDF.setFont("helvetica", "bold");
-        docPDF.setFontSize(26);
+        // ====================================================================
+        // CONTROL DE ESPACIO DEL NOMBRE Y FUENTE KARBONO
+        // ====================================================================
+        docPDF.setFont("Karbono", "bold"); // Aplicamos fuente Karbono
+        docPDF.setFontSize(20); // Letra más pequeña para ahorrar espacio
         docPDF.setTextColor(0, 0, 0);
-        docPDF.text(nombre.toUpperCase(), centroDerechoX, 103, { align: "center" }); 
+
+        // Limita el espacio horizontal a 110mm. Si sobra, corta hacia abajo.
+        const splitNombre = docPDF.splitTextToSize(nombre.toUpperCase(), 110); 
+        docPDF.text(splitNombre, centroDerechoX, 98, { align: "center" }); 
+        
+        // Calcula cuántas líneas ocupó el nombre para bajar el texto inferior
+        const ajusteY = (splitNombre.length - 1) * 8; 
+        // ====================================================================
         
         docPDF.setFont("helvetica", "normal");
         docPDF.setFontSize(12);
         docPDF.setTextColor(80);
-        docPDF.text(`Con documento de identidad (C.I.): ${cedula}`, centroDerechoX, 111, { align: "center" });
+        // Sumamos el ajusteY a las posiciones posteriores para evitar que choquen
+        docPDF.text(`Con documento de identidad (C.I.): ${cedula}`, centroDerechoX, 108 + ajusteY, { align: "center" });
 
         docPDF.setFontSize(13);
         docPDF.setTextColor(60);
-        docPDF.text(`Por haber aprobado satisfactoriamente`, centroDerechoX, 122, { align: "center" });
-        docPDF.text(`la evaluación del módulo:`, centroDerechoX, 127, { align: "center" });
+        docPDF.text(`Por haber aprobado satisfactoriamente`, centroDerechoX, 119 + ajusteY, { align: "center" });
+        docPDF.text(`la evaluación del módulo:`, centroDerechoX, 124 + ajusteY, { align: "center" });
         
         docPDF.setFont("helvetica", "bold");
         const splitModulo = docPDF.splitTextToSize(`"${modulo}"`, 110); 
-        docPDF.text(splitModulo, centroDerechoX, 137, { align: "center" });
+        docPDF.text(splitModulo, centroDerechoX, 134 + ajusteY, { align: "center" });
 
         const notaNumerica = parseFloat(nota);
-        docPDF.text(`Calificación: ${notaNumerica.toFixed(2)}/10`, centroDerechoX, 152, { align: "center" });
+        docPDF.text(`Calificación: ${notaNumerica.toFixed(2)}/10`, centroDerechoX, 149 + (ajusteY * 1.5), { align: "center" });
 
         const fechaSegura = fecha.replace(" ", "T");
         const fechaFormateada = new Date(fechaSegura).toLocaleDateString('es-EC', { year: 'numeric', month: 'long', day: 'numeric' });
         
         docPDF.setFontSize(11);
-        docPDF.text(`Ibarra, Imbabura - ${fechaFormateada}`, centroDerechoX, 167, { align: "center" });
+        docPDF.text(`Ibarra, Imbabura - ${fechaFormateada}`, centroDerechoX, 164 + (ajusteY * 1.5), { align: "center" });
 
         const firmaIzqX = centroDerechoX - 35; 
         const firmaDerX = centroDerechoX + 35; 
