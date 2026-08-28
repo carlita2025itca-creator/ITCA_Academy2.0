@@ -48,11 +48,11 @@
 
     async function buscarYGenerarCertificado(cedulaEstudiante, idModuloTarget) {
         try {
-            const resultadosRef = ref(db, 'certtificados_obtenidos'); 
+            const resultadosRef = ref(db, 'certificados_obtenidos'); 
             const snapshot = await get(resultadosRef);
 
             if (!snapshot.exists()) {
-                mostrarError("La carpeta 'certtificados_obtenidos' no existe en Firebase.", "Si ves esto, estás leyendo una versión en caché del navegador. Por favor abre esta pestaña en Modo Incógnito.");
+                mostrarError("La carpeta 'certificados_obtenidos' no existe en Firebase.", "Si ves esto, estás leyendo una versión en caché del navegador. Por favor abre esta pestaña en Modo Incógnito.");
                 return;
             }
 
