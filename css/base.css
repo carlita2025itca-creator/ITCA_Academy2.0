@@ -134,82 +134,178 @@ body {
     margin-bottom: 1rem; 
     min-height: 20px; 
 }
-
-/* --- DASHBOARD LAYOUT --- */
-#dashboard-screen { 
-    display: none; 
-    grid-template-columns: 250px 1fr; 
-}
-
-#dashboard-screen.active { 
-    display: grid; 
-}
-
-.topbar { 
-    background: var(--bg-card); 
-    padding: 1.2rem 2rem; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    border-bottom: 1px solid var(--border-color); 
-}
-
-.topbar h2 {
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: var(--text-dark);
-}
-
-.user-profile {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    background: var(--bg-main);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    border: 1px solid var(--border-color);
-}
-
-.content-wrapper { 
-    padding: 2rem; 
+/* --- DASHBOARD HEADER --- */
+.dashboard-header {
+    margin-bottom: 2rem;
 }
 
 .view-section h1 {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    color: var(--itca-blue);
+    font-size: 1.7rem;
+    margin-bottom: 0.2rem;
+    color: var(--itca-blue, #004899);
+    font-weight: 700;
+}
+
+.dashboard-subtitle {
+    color: var(--text-muted, #64748b);
+    font-size: 0.95rem;
 }
 
 /* --- UI COMPONENTS (Tarjetas) --- */
 .dashboard-cards { 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
     gap: 1.5rem; 
 }
 
-/* Tarjetas (Cards) */
+/* Diseño base de la tarjeta */
 .card { 
-    background: var(--bg-card); 
+    background: var(--bg-card, #ffffff); 
     padding: 1.5rem; 
-    border-radius: 8px; 
-    border: 1px solid var(--border-color); 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02); 
-    
-    /* --- NUEVO: ESTO EVITA QUE LA TARJETA SE ROMPA --- */
+    border-radius: 12px; 
+    border: 1px solid var(--border-color, #e2e8f0); 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     max-width: 100%; 
     overflow-x: hidden; 
 }
-.card h3 {
-    font-size: 1rem;
-    color: var(--text-muted);
-    font-weight: 500;
+
+/* Efecto interactivo al pasar el mouse */
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Contenedor superior: Texto a la izquierda, Ícono a la derecha */
+.card-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.card-text h3 {
+    font-size: 0.9rem;
+    color: var(--text-muted, #64748b);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
 }
 
 .big-number { 
-    font-size: 2.5rem; 
-    font-weight: bold; 
-    color: var(--itca-blue); 
-    margin-top: 0.5rem; 
+    font-size: 2.2rem; 
+    font-weight: 800; 
+    color: var(--text-dark, #1e293b); 
+    margin-top: 0; 
+    line-height: 1;
 }
+
+/* Contenedores de íconos con fondos pastel */
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.icon-blue { background-color: #e0f2fe; color: #0284c7; }
+.icon-green { background-color: #dcfce7; color: #16a34a; }
+.icon-red { background-color: #fee2e2; color: #dc2626; }
+.icon-orange { background-color: #fef3c7; color: #d97706; }
+
+/* Pie de la tarjeta (Contexto) */
+.card-footer {
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #f1f5f9);
+    font-size: 0.8rem;
+}
+
+.card-footer .text-muted {
+    color: var(--text-muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+/* --- CARRUSEL DE MÓDULOS EN DASHBOARD --- */
+.dashboard-carousel-container {
+    margin-top: 2rem;
+    background: var(--bg-card, #ffffff);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.carousel-title {
+    font-size: 1.1rem;
+    color: var(--text-dark, #1e293b);
+    margin-bottom: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 1.2rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    scroll-behavior: smooth;
+    /* Diseño moderno de barra de desplazamiento */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+/* Barra desplazable para Chrome/Safari/Edge */
+.carousel-track::-webkit-scrollbar { height: 8px; }
+.carousel-track::-webkit-scrollbar-track { background: transparent; }
+.carousel-track::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+
+.carousel-item {
+    flex: 0 0 auto; /* Evita que las tarjetas se encojan */
+    width: 200px;
+    background: #f8fafc;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-color, #e2e8f0);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.carousel-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-item img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+
+.carousel-item-title {
+    padding: 0.8rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+
+
 
 
 

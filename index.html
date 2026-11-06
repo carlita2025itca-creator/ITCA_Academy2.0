@@ -108,27 +108,85 @@
 
             <div class="content-wrapper">
                 <!-- VISTA: INICIO --------------------------------------------------------------------------------->
-                <section id="view-dashboard" class="view-section active">
-                    <h1>Bienvenido a ITCA Academy 2.0</h1>
-                    <div class="dashboard-cards">
-                        <div class="card">
-                            <h3><i class="fas fa-users" style="color: #004899;"></i> Usuarios Activos</h3>
-                            <p class="big-number" id="dash-count-users">...</p>
-                        </div>
-                        <div class="card">
-                            <h3><i class="fas fa-cubes" style="color: #166534;"></i> Módulos Creados</h3>
-                            <p class="big-number" id="dash-count-modules">...</p>
-                        </div>
-                        <div class="card">
-                            <h3><i class="fas fa-user-shield" style="color: #b91c1c;"></i> Administradores</h3>
-                            <p class="big-number" id="dash-count-admins">...</p>
-                        </div>
-                        <div class="card">
-                            <h3><i class="fas fa-certificate" style="color: #d97706;"></i> Evaluaciones</h3>
-                            <p class="big-number" id="dash-count-certs">...</p>
-                        </div>
-                    </div>
-                </section>
+               <section id="view-dashboard" class="view-section active">
+    <div class="dashboard-header">
+        <h1>Bienvenido a ITCA Academy 2.0</h1>
+        <p class="dashboard-subtitle">Resumen general de la plataforma</p>
+    </div>
+    
+    <div class="dashboard-cards">
+        <!-- Tarjeta: Usuarios -->
+        <div class="card">
+            <div class="card-content">
+                <div class="card-text">
+                    <h3>Usuarios Activos</h3>
+                    <p class="big-number" id="dash-count-users">...</p>
+                </div>
+                <div class="card-icon icon-blue">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="card-footer">
+                <span class="text-muted"><i class="fas fa-clock"></i> Sincronizado en tiempo real</span>
+            </div>
+        </div>
+
+        <!-- Tarjeta: Módulos -->
+        <div class="card">
+            <div class="card-content">
+                <div class="card-text">
+                    <h3>Módulos Creados</h3>
+                    <p class="big-number" id="dash-count-modules">...</p>
+                </div>
+                <div class="card-icon icon-green">
+                    <i class="fas fa-cubes"></i>
+                </div>
+            </div>
+            <div class="card-footer">
+                <span class="text-muted"><i class="fas fa-cubes"></i> Contenido AR activo</span>
+            </div>
+        </div>
+
+        <!-- Tarjeta: Administradores -->
+        <div class="card">
+            <div class="card-content">
+                <div class="card-text">
+                    <h3>Administradores</h3>
+                    <p class="big-number" id="dash-count-admins">...</p>
+                </div>
+                <div class="card-icon icon-red">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+            <div class="card-footer">
+                <span class="text-muted"><i class="fas fa-shield-alt"></i> Accesos con privilegios</span>
+            </div>
+        </div>
+
+        <!-- Tarjeta: Evaluaciones -->
+        <div class="card">
+            <div class="card-content">
+                <div class="card-text">
+                    <h3>Evaluaciones</h3>
+                    <p class="big-number" id="dash-count-certs">...</p>
+                </div>
+                <div class="card-icon icon-orange">
+                    <i class="fas fa-certificate"></i>
+                </div>
+            </div>
+            <div class="card-footer">
+                <span class="text-muted"><i class="fas fa-chart-line"></i> Pre, Post y TAM</span>
+            </div>
+        </div>
+    </div>
+    <div class="dashboard-carousel-container">
+        <h2 class="carousel-title"><i class="fas fa-images"></i> Módulos Disponibles</h2>
+        <div class="carousel-track" id="dashboard-carousel">
+            <!-- Las portadas se inyectarán dinámicamente aquí -->
+            <div style="padding: 1rem; color: #64748b;">Cargando portadas...</div>
+        </div>
+    </div>
+</section>
                 <!-- VISTA: USUARIOS ------------------------------------------------------------------------------------------>
                 <!------------------------------------------------------------------------------------------------------------>
                 <section id="view-users" class="view-section">

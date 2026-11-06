@@ -61,11 +61,59 @@ export async function actualizarDashboard() {
         if(uiAdmins) uiAdmins.innerText = totalAdmins;
         if(uiCerts) uiCerts.innerText = totalCerts;
 
+        // NUEVO: Llamar a la función del carrusel después de actualizar los números
+        cargarCarruselModulos();
+
     } catch (error) {
         console.error("Error al actualizar el Dashboard:", error);
         [uiUsers, uiModules, uiAdmins, uiCerts].forEach(el => {
             if(el) el.innerText = "Error";
         });
+    }
+}
+
+// ============================================================================
+// 1.5. NUEVO: CARGAR CARRUSEL DE MÓDULOS
+// ============================================================================
+export async function cargarCarruselModulos() {
+    const carousel = document.getElementById('dashboard-carousel');
+    if (!carousel) return;
+
+    try {
+        const snapshot = await get(child(ref(db), "modulos"));
+        
+        if (!snapshot.exists()) {
+            carousel.innerHTML = '<div style="color:#64748b;">No hay módulos registrados.</div>';
+            return;
+        }
+
+        let modulosHTML = '';
+        const defaultImg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48cmVjdCB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNjQ3NDhiIj5Nw7RkdWxvPC90ZXh0Pjwvc3ZnPg==";
+
+        let modulos = [];
+        snapshot.forEach(doc => {
+            modulos.push({ id: doc.key, ...doc.val() });
+        });
+
+        // Invertimos para mostrar los últimos módulos creados primero
+        modulos.reverse();
+
+        modulos.forEach(data => {
+            const imgPortada = data.url_imagen || data.portadaUrl || data.imagenUrl || defaultImg;
+            
+            modulosHTML += `
+                <div class="carousel-item" title="${data.nombre}">
+                    <img src="${imgPortada}" alt="${data.nombre}" onerror="this.onerror=null; this.src='${defaultImg}';">
+                    <div class="carousel-item-title">${data.nombre}</div>
+                </div>
+            `;
+        });
+
+        carousel.innerHTML = modulosHTML;
+
+    } catch (error) {
+        console.error("Error al cargar carrusel:", error);
+        carousel.innerHTML = '<div style="color:red;">Error al cargar los módulos.</div>';
     }
 }
 
