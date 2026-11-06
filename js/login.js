@@ -122,3 +122,28 @@ export function initLogin() {
         });
     }
 }
+// =================================================================
+    // NUEVO: Lógica para Mostrar/Ocultar Contraseña (Icono de Sistema)
+    // =================================================================
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordField = document.getElementById('password');
+
+    if (togglePassword && passwordField) {
+        togglePassword.addEventListener('click', function () {
+            // 1. Alternamos entre texto y contraseña
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            // 2. Buscamos el icono <i> dentro del span y alternamos sus clases
+            const icon = this.querySelector('i');
+            if (icon) {
+                if (type === 'password') {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                } else {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            }
+        });
+    }
