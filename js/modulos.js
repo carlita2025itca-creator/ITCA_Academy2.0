@@ -1,10 +1,13 @@
 import { db } from './firebase-config.js';
 // 1. IMPORTACIONES CORREGIDAS PARA REALTIME DATABASE
 import { ref, get, child, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
 import { registrarAccion } from './historial.js';
-import { storage } from './firebase-config.js';
+
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// ✅ URL apuntando al servidor de Innofusion
+const URL_SERVIDOR_IMAGENES = "https://innofusion.itca.edu.ec/addressables/imagenmodulos/subir_imagen.php";
+
 // 👇 2. NUEVA FUNCIÓN PARA SINCRONIZAR LA SESIÓN
 function esperarAutenticacion() {
     return new Promise((resolve) => {
@@ -14,6 +17,35 @@ function esperarAutenticacion() {
             resolve(user); // Devuelve el usuario cuando Firebase ya lo validó
         });
     });
+}
+// ==========================================
+// FUNCIÓN CONECTADA AL SERVIDOR REAL (ITCA)
+// ==========================================
+async function subirImagenAlServidor(archivoComprimido) {
+    console.log("Enviando imagen al servidor ITCA:", archivoComprimido.name);
+    
+    const formData = new FormData();
+    formData.append("file", archivoComprimido);
+    
+    try {
+        const response = await fetch(URL_SERVIDOR_IMAGENES, { 
+            method: "POST", 
+            body: formData 
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === "success") {
+            // El servidor de Innofusion guardó la imagen y nos devuelve el link real
+            return data.url; 
+        } else {
+            throw new Error(data.message || "Error al procesar en el servidor PHP.");
+        }
+    } catch (error) {
+        console.error("Error de conexión:", error);
+        alert("Fallo la conexión con el servidor de Innofusion. Revisa la consola.");
+        throw error;
+    }
 }
 export async function cargarTablaModulos() {
     const tableBody = document.getElementById('modules-table-body');
@@ -344,20 +376,15 @@ export function initModulosModule() {
 
                 const nuevoNumero = maxId + 1;
                 const moduloIdGenerado = "MOD" + nuevoNumero.toString().padStart(3, '0');
+// 2. PREPARAMOS LA PORTADA (Simulando servidor propio)
+btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y preparando portada...';
+const portadaComprimida = await comprimirImagen(archivoImagen);
+const urlDescargaPortada = await subirImagenAlServidor(portadaComprimida);
 
-                // 2. SUBIMOS LA IMAGEN DE PORTADA A STORAGE (CON COMPRESIÓN)
-                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo portada...';
-                const portadaComprimida = await comprimirImagen(archivoImagen); // <-- APLICAMOS COMPRESIÓN
-                const imgReferencia = storageRef(storage, `portadas_modulos/${moduloIdGenerado}_${portadaComprimida.name}`);
-                await uploadBytes(imgReferencia, portadaComprimida);
-                const urlDescargaPortada = await getDownloadURL(imgReferencia);
-
-                // 3. NUEVO: SUBIMOS LA IMAGEN DE CARGA A STORAGE (CON COMPRESIÓN)
-                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo fondo AR...';
-                const cargaComprimida = await comprimirImagen(archivoCarga); // <-- APLICAMOS COMPRESIÓN
-                const imgCargaReferencia = storageRef(storage, `cargas_modulos/${moduloIdGenerado}_${cargaComprimida.name}`);
-                await uploadBytes(imgCargaReferencia, cargaComprimida);
-                const urlDescargaCarga = await getDownloadURL(imgCargaReferencia);
+// 3. PREPARAMOS EL FONDO AR (Simulando servidor propio)
+btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y preparando fondo AR...';
+const cargaComprimida = await comprimirImagen(archivoCarga);
+const urlDescargaCarga = await subirImagenAlServidor(cargaComprimida);
 
 
                 // 4. ARMAMOS EL OBJETO FINAL
@@ -672,20 +699,18 @@ export function configurarModalEdicion() {
                     }
             };
 
-            // 2. Si subieron una NUEVA portada, la subimos y agregamos la URL al objeto
+           // 2. Si subieron una NUEVA portada, la preparamos (Simulando servidor propio)
             if (archivoEditImagen) {
-                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo nueva portada...';
-                const imgReferencia = storageRef(storage, `portadas_modulos/${idModulo}_${archivoEditImagen.name}`);
-                await uploadBytes(imgReferencia, archivoEditImagen);
-                datosActualizados.url_imagen = await getDownloadURL(imgReferencia);
+                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando nueva portada...';
+                const portadaEditComprimida = await comprimirImagen(archivoEditImagen);
+                datosActualizados.url_imagen = await subirImagenAlServidor(portadaEditComprimida);
             }
 
-            // 3. Si subieron un NUEVO fondo AR, lo subimos y agregamos la URL al objeto
+            // 3. Si subieron un NUEVO fondo AR, lo preparamos (Simulando servidor propio)
             if (archivoEditCarga) {
-                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo nuevo fondo AR...';
-                const imgCargaReferencia = storageRef(storage, `cargas_modulos/${idModulo}_${archivoEditCarga.name}`);
-                await uploadBytes(imgCargaReferencia, archivoEditCarga);
-                datosActualizados.url_imagen_carga = await getDownloadURL(imgCargaReferencia);
+                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando nuevo fondo AR...';
+                const cargaEditComprimida = await comprimirImagen(archivoEditCarga);
+                datosActualizados.url_imagen_carga = await subirImagenAlServidor(cargaEditComprimida);
             }
 
             // 4. Actualizamos en Firebase (el método update solo cambia los campos que le mandemos, sin borrar los viejos)
