@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js"; // 1. Importar getStorage
+// ❌ Eliminar getStorage
 
 const firebaseConfig = {
   apiKey: "AIzaSyBfsSCO1zfbzXoBjyx-7Mi88wgSWSfK1BM",
@@ -17,9 +17,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
-const storage = getStorage(app); // 2. Inicializar la instancia de storage
+// ❌ Eliminar const storage = getStorage(app);
 
 const secondaryApp = initializeApp(firebaseConfig, "SecondaryApp");
 const secondaryAuth = getAuth(secondaryApp);
 
-export { app, auth, db, storage, secondaryAuth }; // 3. Exportar storage
+export { app, auth, db, secondaryAuth }; // ❌ Eliminar storage de los exports

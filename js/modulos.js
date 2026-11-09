@@ -1,12 +1,11 @@
 import { db } from './firebase-config.js';
-// 1. IMPORTACIONES CORREGIDAS PARA REALTIME DATABASE
 import { ref, get, child, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-import { registrarAccion } from './historial.js';
-
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-// ✅ URL apuntando al servidor de Innofusion
-const URL_SERVIDOR_IMAGENES = "https://innofusion.itca.edu.ec/addressables/imagenmodulos/subir_imagen.php";
+
+// IMPORTAR NUESTRA FUNCIÓN DE BUNNY DIRECTO
+import { subiraBunny } from './bunny-config.js';
+
 
 // 👇 2. NUEVA FUNCIÓN PARA SINCRONIZAR LA SESIÓN
 function esperarAutenticacion() {
@@ -18,34 +17,17 @@ function esperarAutenticacion() {
         });
     });
 }
-// ==========================================
-// FUNCIÓN CONECTADA AL SERVIDOR REAL (ITCA)
-// ==========================================
-async function subirImagenAlServidor(archivoComprimido) {
-    console.log("Enviando imagen al servidor ITCA:", archivoComprimido.name);
+function obtenerCategoriasMultiples(contenedorId) {
+    const contenedor = document.getElementById(contenedorId);
+    if (!contenedor) return "";
     
-    const formData = new FormData();
-    formData.append("file", archivoComprimido);
+    // Buscamos todos los checkboxes que tengan la propiedad :checked dentro de este div
+    const checkboxesMarcados = contenedor.querySelectorAll('input[type="checkbox"]:checked');
     
-    try {
-        const response = await fetch(URL_SERVIDOR_IMAGENES, { 
-            method: "POST", 
-            body: formData 
-        });
-        
-        const data = await response.json();
-        
-        if (data.status === "success") {
-            // El servidor de Innofusion guardó la imagen y nos devuelve el link real
-            return data.url; 
-        } else {
-            throw new Error(data.message || "Error al procesar en el servidor PHP.");
-        }
-    } catch (error) {
-        console.error("Error de conexión:", error);
-        alert("Fallo la conexión con el servidor de Innofusion. Revisa la consola.");
-        throw error;
-    }
+    // Extraemos el valor (nombre) de cada uno
+    const seleccionadas = Array.from(checkboxesMarcados).map(cb => cb.value);
+    
+    return seleccionadas.join(", "); // Devuelve "Salud, Tecnología"
 }
 export async function cargarTablaModulos() {
     const tableBody = document.getElementById('modules-table-body');
@@ -157,12 +139,14 @@ export async function cargarTablaModulos() {
             // =========================================================
            const cantidadEvaluacion = data.cantidadPreguntas || 0;
 
-            // 1. Definimos la imagen por defecto en formato SVG
-           const defaultImg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48cmVjdCB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNjQ3NDhiIj5Nw7RkdWxvPC90ZXh0Pjwvc3ZnPg==";
+           // 1. Definimos la imagen por defecto en formato SVG
+const defaultImg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48cmVjdCB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNjQ3NDhiIj5Nw7RkdWxvPC90ZXh0Pjwvc3ZnPg==";
 
-            // 2. Asignamos la imagen de Firebase, o usamos el SVG si no existe
-            const imgPortada = data.url_imagen || data.portadaUrl || data.imagenUrl || defaultImg;
+// Dentro de la función cargarTablaModulos(), al generar el HTML de la imagen:
+const idDelModulo = data.moduloId || id;
 
+// Leemos directo desde Bunny usando el CDN público
+const imgPortada = data.url_imagen || `https://inno-fusion.b-cdn.net/portadas_modulos/${idDelModulo}_portada.jpg`;
             // 2. NUEVO: Agregamos la fila a la variable de texto (filasHTML +=)
             filasHTML += `
                 <tr>
@@ -326,7 +310,7 @@ export function initModulosModule() {
             const nombreIngresado = document.getElementById('mod-nombre').value.trim();
             const descripcionIngresada = document.getElementById('mod-desc').value.trim();
             const docenteSeleccionado = document.getElementById('mod-docente').value;
-            const categoriaSeleccionada = document.getElementById('mod-categoria').value;
+         const categoriaSeleccionada = obtenerCategoriasMultiples('mod-categoria');
             const cantidadPreguntas = parseInt(document.getElementById('mod-cantidad-preguntas').value) || 0;
             const evalPre = document.getElementById('mod-eval-pre').checked;
             const evalPost = document.getElementById('mod-eval-post').checked;
@@ -376,16 +360,17 @@ export function initModulosModule() {
 
                 const nuevoNumero = maxId + 1;
                 const moduloIdGenerado = "MOD" + nuevoNumero.toString().padStart(3, '0');
-// 2. PREPARAMOS LA PORTADA (Simulando servidor propio)
-btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y preparando portada...';
-const portadaComprimida = await comprimirImagen(archivoImagen);
-const urlDescargaPortada = await subirImagenAlServidor(portadaComprimida);
+// 2. SUBIMOS LA IMAGEN DE PORTADA A BUNNY.NET
+btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo portada...';
+const portadaComprimida = await comprimirImagen(archivoImagen); 
+const rutaPortada = `portadas_modulos/${moduloIdGenerado}_portada.jpg`;
+const urlDescargaPortada = await subiraBunny(portadaComprimida, rutaPortada);
 
-// 3. PREPARAMOS EL FONDO AR (Simulando servidor propio)
-btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y preparando fondo AR...';
+// 3. SUBIMOS LA IMAGEN DE CARGA A BUNNY.NET
+btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo fondo AR...';
 const cargaComprimida = await comprimirImagen(archivoCarga);
-const urlDescargaCarga = await subirImagenAlServidor(cargaComprimida);
-
+const rutaCarga = `cargas_modulos/${moduloIdGenerado}_carga.jpg`;
+const urlDescargaCarga = await subiraBunny(cargaComprimida, rutaCarga);
 
                 // 4. ARMAMOS EL OBJETO FINAL
                 btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando datos...';
@@ -673,7 +658,7 @@ export function configurarModalEdicion() {
             const evalPostEdit = document.getElementById('edit-mod-eval-post').checked;
             const evalTamEdit = document.getElementById('edit-mod-eval-tam').checked;
             const docenteEditado = document.getElementById('edit-mod-docente').value;
-            const categoriaEditada = document.getElementById('edit-mod-categoria').value;
+           const categoriaEditada = obtenerCategoriasMultiples('edit-mod-categoria');
 
             // Capturamos archivos (si seleccionaron nuevos)
             const inputEditImagen = document.getElementById('edit-mod-imagen');
@@ -699,19 +684,21 @@ export function configurarModalEdicion() {
                     }
             };
 
-           // 2. Si subieron una NUEVA portada, la preparamos (Simulando servidor propio)
-            if (archivoEditImagen) {
-                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando nueva portada...';
-                const portadaEditComprimida = await comprimirImagen(archivoEditImagen);
-                datosActualizados.url_imagen = await subirImagenAlServidor(portadaEditComprimida);
-            }
+    // 2. Si subieron una NUEVA portada, sobrescribe en Bunny.net
+if (archivoEditImagen) {
+    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo nueva portada...';
+    const portadaEditComprimida = await comprimirImagen(archivoEditImagen);
+    const rutaPortada = `portadas_modulos/${idModulo}_portada.jpg`;
+    datosActualizados.url_imagen = await subiraBunny(portadaEditComprimida, rutaPortada);
+}
 
-            // 3. Si subieron un NUEVO fondo AR, lo preparamos (Simulando servidor propio)
-            if (archivoEditCarga) {
-                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparando nuevo fondo AR...';
-                const cargaEditComprimida = await comprimirImagen(archivoEditCarga);
-                datosActualizados.url_imagen_carga = await subirImagenAlServidor(cargaEditComprimida);
-            }
+// 3. Si subieron un NUEVO fondo AR, sobrescribe en Bunny.net
+if (archivoEditCarga) {
+    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo nuevo fondo AR...';
+    const cargaEditComprimida = await comprimirImagen(archivoEditCarga);
+    const rutaCarga = `cargas_modulos/${idModulo}_carga.jpg`;
+    datosActualizados.url_imagen_carga = await subiraBunny(cargaEditComprimida, rutaCarga);
+}
 
             // 4. Actualizamos en Firebase (el método update solo cambia los campos que le mandemos, sin borrar los viejos)
             btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando datos...';
@@ -742,27 +729,38 @@ window.cerrarModalCategoria = () => {
     document.getElementById('modal-categoria').classList.remove('active');
     document.getElementById('form-add-categoria').reset();
 };
-
-export async function cargarCategoriasSelect(selectId, categoriaAsignada = "") {
-    const select = document.getElementById(selectId);
-    if (!select) return;
+export async function cargarCategoriasSelect(contenedorId, categoriasGuardadas = "") {
+    const contenedor = document.getElementById(contenedorId);
+    if (!contenedor) return;
 
     try {
         const snapshot = await get(child(ref(db), "categorias_modulos"));
-        select.innerHTML = '<option value="">Seleccione una categoría...</option>';
+        contenedor.innerHTML = ''; // Limpiamos el texto de "Cargando..."
+        
+        // Convertimos el texto "Salud, Tecnología" en un array ["Salud", "Tecnología"]
+        const arrayCategorias = categoriasGuardadas.split(',').map(c => c.trim());
 
         if (snapshot.exists()) {
             snapshot.forEach(doc => {
                 const nombre = doc.val().nombre;
-                const selected = (nombre === categoriaAsignada) ? 'selected' : '';
-                select.innerHTML += `<option value="${nombre}" ${selected}>${nombre}</option>`;
+                const isChecked = arrayCategorias.includes(nombre) ? 'checked' : '';
+                
+                // Inyectamos un checkbox por cada categoría
+                contenedor.innerHTML += `
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem; color: #334155;">
+                        <input type="checkbox" value="${nombre}" ${isChecked} style="width: 16px; height: 16px; cursor: pointer;">
+                        ${nombre}
+                    </label>
+                `;
             });
+        } else {
+            contenedor.innerHTML = '<span style="color: #64748b; font-size: 0.9rem;">No hay categorías creadas.</span>';
         }
     } catch (error) {
         console.error("Error al cargar categorías:", error);
+        contenedor.innerHTML = '<span style="color: red; font-size: 0.9rem;">Error al cargar</span>';
     }
 }
-
 // Guardar nueva categoría
 document.getElementById('form-add-categoria').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -818,23 +816,25 @@ window.verCertificadosDeModulo = (idTecnico) => {
         }
     }, 100);
 };
-
-// ==========================================
-// EXPORTAR MÓDULOS A EXCEL
-// ==========================================
 window.exportarModulosExcel = () => {
     const filasTabla = document.querySelectorAll('#modules-table-body tr');
     const datosParaExcel = [];
 
     filasTabla.forEach(fila => {
+        // Ignorar filas ocultas por el buscador o la fila de "No tienes módulos"
         if (fila.style.display === 'none' || fila.cells.length <= 1) return;
 
-        const nombreDesc = fila.cells[1].innerText.replace(/\n/g, ' - ').trim();
+        // cells[1] = ID Módulo
+        // cells[2] = Nombre, Descripción, Docente, Categoría
+        // cells[3] = Cantidad Preguntas
+        // cells[4] = Estado Activo
+        const detalles = fila.cells[2].innerText.replace(/\n/g, ' | ').trim();
 
         datosParaExcel.push({
-            "ID Módulo": fila.cells[0].innerText.trim(),
-            "Nombre y Descripción": nombreDesc,
-            "Estado": fila.cells[2].innerText.trim()
+            "ID Módulo": fila.cells[1].innerText.trim(),
+            "Detalles del Módulo": detalles,
+            "Preguntas": fila.cells[3].innerText.trim(),
+            "Estado": fila.cells[4].innerText.trim()
         });
     });
 
@@ -847,4 +847,3 @@ window.exportarModulosExcel = () => {
 
     import('./historial.js').then(m => m.registrarAccion('EXPORTAR', 'Módulos', 'Descargó reporte de módulos en Excel.'));
 };
-
