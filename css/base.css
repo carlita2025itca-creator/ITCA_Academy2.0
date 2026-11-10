@@ -287,9 +287,10 @@ body {
 
 .carousel-item img {
     width: 100%;
-    height: 140px;
-    object-fit: cover;
+    height: 115px; /* Reducimos la altura para que coincida con el formato panorámico 16:9 */
+    object-fit: contain; /* Esto obliga al navegador a mostrar la imagen COMPLETA al 100% sin recortes */
     display: block;
+    background-color: #f1f5f9; /* Un fondo gris muy suave por si la imagen deja pequeñas franjas */
 }
 
 .carousel-item-title {

@@ -20,13 +20,13 @@ function esperarAutenticacion() {
 function obtenerCategoriasMultiples(contenedorId) {
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) return "";
-    
+
     // Buscamos todos los checkboxes que tengan la propiedad :checked dentro de este div
     const checkboxesMarcados = contenedor.querySelectorAll('input[type="checkbox"]:checked');
-    
+
     // Extraemos el valor (nombre) de cada uno
     const seleccionadas = Array.from(checkboxesMarcados).map(cb => cb.value);
-    
+
     return seleccionadas.join(", "); // Devuelve "Salud, Tecnología"
 }
 export async function cargarTablaModulos() {
@@ -36,7 +36,7 @@ export async function cargarTablaModulos() {
     // 👇 3A. ESPERAMOS A QUE FIREBASE CONFIRME LA SESIÓN
     tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Verificando sesión segura con Firebase...</td></tr>';
     const user = await esperarAutenticacion();
-    
+
     if (!user) {
         tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">No autorizado. Inicia sesión nuevamente.</td></tr>';
         return; // Detenemos todo si Firebase dice que no hay nadie
@@ -52,7 +52,7 @@ export async function cargarTablaModulos() {
     }
 
     tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Cargando módulos...</td></tr>';
-    
+
     try {
         const dbRef = ref(db);
         const snapshot = await get(child(dbRef, "modulos"));
@@ -100,7 +100,11 @@ export async function cargarTablaModulos() {
             return;
         }
 
-        modulosArray.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        modulosArray.sort((a, b) => {
+            const idA = a.moduloId || a.id;
+            const idB = b.moduloId || b.id;
+            return idA.localeCompare(idB);
+        });
 
         // 1. NUEVO: Creamos una variable de texto para acumular todo el HTML
         let filasHTML = '';
@@ -121,32 +125,29 @@ export async function cargarTablaModulos() {
             // =========================================================
             const botonPreguntas = `
                 <a href="#" onclick="abrirGestionPreguntas('${id}', '${data.nombre}', '${data.moduloId}')">
-                    <i class="fas fa-question-circle"></i> Preguntas
+                    <i class="fas fa-question-circle"></i> Cargar preguntas
                 </a>
             `;
 
             const botonesAdminExtra = `
-                <a href="#" onclick="abrirModalEditarModulo('${id}', '${data.moduloId}', '${data.nombre}')">
-                    <i class="fas fa-edit"></i> Editar
-                </a>
-                <a href="#" onclick="eliminarModulo('${id}', '${data.nombre}', '${data.moduloId}')" class="action-danger">
-                    <i class="fas fa-trash"></i> Eliminar
-                </a>
-            `;
+    <a href="#" onclick="abrirModalEditarModulo('${id}', '${data.moduloId}', '${data.nombre}')">
+        <i class="fas fa-edit"></i> Editar
+    </a>
+`;
 
             const esAdmin = (rolActual === 'superadmin' || rolActual === 'admin' || rolActual === 'rol_administrador');
             const menuDropdown = esAdmin ? (botonPreguntas + botonesAdminExtra) : botonPreguntas;
             // =========================================================
-           const cantidadEvaluacion = data.cantidadPreguntas || 0;
+            const cantidadEvaluacion = data.cantidadPreguntas || 0;
 
-           // 1. Definimos la imagen por defecto en formato SVG
-const defaultImg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48cmVjdCB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNjQ3NDhiIj5Nw7RkdWxvPC90ZXh0Pjwvc3ZnPg==";
+            // 1. Definimos la imagen por defecto en formato SVG
+            const defaultImg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48cmVjdCB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIGZpbGw9IiNlMmU4ZjAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmaWxsPSIjNjQ3NDhiIj5Nw7RkdWxvPC90ZXh0Pjwvc3ZnPg==";
 
-// Dentro de la función cargarTablaModulos(), al generar el HTML de la imagen:
-const idDelModulo = data.moduloId || id;
+            // Dentro de la función cargarTablaModulos(), al generar el HTML de la imagen:
+            const idDelModulo = data.moduloId || id;
 
-// Leemos directo desde Bunny usando el CDN público
-const imgPortada = data.url_imagen || `https://inno-fusion.b-cdn.net/portadas_modulos/${idDelModulo}_portada.jpg`;
+            // Leemos directo desde Bunny usando el CDN público
+            const imgPortada = data.url_imagen || `https://inno-fusion.b-cdn.net/portadas_modulos/${idDelModulo}_portada.jpg`;
             // 2. NUEVO: Agregamos la fila a la variable de texto (filasHTML +=)
             filasHTML += `
                 <tr>
@@ -267,7 +268,7 @@ export function initModulosModule() {
     if (btnCancel) btnCancel.addEventListener('click', cerrar);
     if (closeX) closeX.addEventListener('click', cerrar);
 
-   // ==========================================
+    // ==========================================
     // BUSCADOR EN VIVO DE MÓDULOS
     // ==========================================
     const searchInput = document.getElementById('search-module');
@@ -310,7 +311,7 @@ export function initModulosModule() {
             const nombreIngresado = document.getElementById('mod-nombre').value.trim();
             const descripcionIngresada = document.getElementById('mod-desc').value.trim();
             const docenteSeleccionado = document.getElementById('mod-docente').value;
-         const categoriaSeleccionada = obtenerCategoriasMultiples('mod-categoria');
+            const categoriaSeleccionada = obtenerCategoriasMultiples('mod-categoria');
             const cantidadPreguntas = parseInt(document.getElementById('mod-cantidad-preguntas').value) || 0;
             const evalPre = document.getElementById('mod-eval-pre').checked;
             const evalPost = document.getElementById('mod-eval-post').checked;
@@ -360,17 +361,17 @@ export function initModulosModule() {
 
                 const nuevoNumero = maxId + 1;
                 const moduloIdGenerado = "MOD" + nuevoNumero.toString().padStart(3, '0');
-// 2. SUBIMOS LA IMAGEN DE PORTADA A BUNNY.NET
-btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo portada...';
-const portadaComprimida = await comprimirImagen(archivoImagen); 
-const rutaPortada = `portadas_modulos/${moduloIdGenerado}_portada.jpg`;
-const urlDescargaPortada = await subiraBunny(portadaComprimida, rutaPortada);
+                // 2. SUBIMOS LA IMAGEN DE PORTADA A BUNNY.NET
+                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo portada...';
+                const portadaComprimida = await comprimirImagen(archivoImagen);
+                const rutaPortada = `portadas_modulos/${moduloIdGenerado}_portada.jpg`;
+                const urlDescargaPortada = await subiraBunny(portadaComprimida, rutaPortada);
 
-// 3. SUBIMOS LA IMAGEN DE CARGA A BUNNY.NET
-btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo fondo AR...';
-const cargaComprimida = await comprimirImagen(archivoCarga);
-const rutaCarga = `cargas_modulos/${moduloIdGenerado}_carga.jpg`;
-const urlDescargaCarga = await subiraBunny(cargaComprimida, rutaCarga);
+                // 3. SUBIMOS LA IMAGEN DE CARGA A BUNNY.NET
+                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo fondo AR...';
+                const cargaComprimida = await comprimirImagen(archivoCarga);
+                const rutaCarga = `cargas_modulos/${moduloIdGenerado}_carga.jpg`;
+                const urlDescargaCarga = await subiraBunny(cargaComprimida, rutaCarga);
 
                 // 4. ARMAMOS EL OBJETO FINAL
                 btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando datos...';
@@ -504,7 +505,7 @@ window.eliminarModulo = async (idDocumento, nombreModulo, idTecnico) => {
             allowOutsideClick: false,
             didOpen: () => { Swal.showLoading() }
         });
-
+       
         try {
             // 2. BUSCAR PREGUNTAS ASOCIADAS CON CONSULTA OPTIMIZADA
             const qPreguntas = query(ref(db, "preguntas"), orderByChild("moduloId"), equalTo(idTecnico));
@@ -523,6 +524,8 @@ window.eliminarModulo = async (idDocumento, nombreModulo, idTecnico) => {
             // 3. BORRAR EL MÓDULO PRINCIPAL
             await remove(ref(db, `modulos/${idTecnico}`));
 
+            const modalEdit = document.getElementById('modal-edit-module');
+            if (modalEdit) modalEdit.classList.remove('active');
             Swal.fire('¡Eliminado!', `Se eliminó el módulo y ${preguntasBorradas} preguntas asociadas.`, 'success');
 
             import('./historial.js').then(module => {
@@ -615,6 +618,14 @@ window.abrirModalEditarModulo = async (idDocumento, idTecnico, nombreModulo) => 
                 }
             }
 
+            // NUEVO: Asignar la función de eliminar al botón interno
+            const btnEliminarInterno = document.getElementById('btn-delete-module-inside');
+            if (btnEliminarInterno) {
+                btnEliminarInterno.onclick = () => {
+                    eliminarModulo(idDocumento, data.nombre, idTecnico);
+                };
+            }
+
             modalEdit.classList.add('active');
         }
     } catch (error) {
@@ -658,7 +669,7 @@ export function configurarModalEdicion() {
             const evalPostEdit = document.getElementById('edit-mod-eval-post').checked;
             const evalTamEdit = document.getElementById('edit-mod-eval-tam').checked;
             const docenteEditado = document.getElementById('edit-mod-docente').value;
-           const categoriaEditada = obtenerCategoriasMultiples('edit-mod-categoria');
+            const categoriaEditada = obtenerCategoriasMultiples('edit-mod-categoria');
 
             // Capturamos archivos (si seleccionaron nuevos)
             const inputEditImagen = document.getElementById('edit-mod-imagen');
@@ -682,44 +693,47 @@ export function configurarModalEdicion() {
                         post: evalPostEdit,
                         tam: evalTamEdit
                     }
-            };
+                };
+                // 2. Si subieron una NUEVA portada, sobrescribe en Bunny.net
+                if (archivoEditImagen) {
+                    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo nueva portada...';
+                    const portadaEditComprimida = await comprimirImagen(archivoEditImagen);
 
-    // 2. Si subieron una NUEVA portada, sobrescribe en Bunny.net
-if (archivoEditImagen) {
-    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo nueva portada...';
-    const portadaEditComprimida = await comprimirImagen(archivoEditImagen);
-    const rutaPortada = `portadas_modulos/${idModulo}_portada.jpg`;
-    datosActualizados.url_imagen = await subiraBunny(portadaEditComprimida, rutaPortada);
-}
+                    // Le agregamos Date.now() para que el archivo y el enlace sean 100% únicos
+                    const rutaPortada = `portadas_modulos/${idModulo}_portada_${Date.now()}.jpg`;
+                    datosActualizados.url_imagen = await subiraBunny(portadaEditComprimida, rutaPortada);
+                }
 
-// 3. Si subieron un NUEVO fondo AR, sobrescribe en Bunny.net
-if (archivoEditCarga) {
-    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo nuevo fondo AR...';
-    const cargaEditComprimida = await comprimirImagen(archivoEditCarga);
-    const rutaCarga = `cargas_modulos/${idModulo}_carga.jpg`;
-    datosActualizados.url_imagen_carga = await subiraBunny(cargaEditComprimida, rutaCarga);
-}
+                // 3. Si subieron un NUEVO fondo AR, sobrescribe en Bunny.net
+                if (archivoEditCarga) {
+                    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo y subiendo nuevo fondo AR...';
+                    const cargaEditComprimida = await comprimirImagen(archivoEditCarga);
 
-            // 4. Actualizamos en Firebase (el método update solo cambia los campos que le mandemos, sin borrar los viejos)
-            btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando datos...';
-            const referenciaEspecifica = ref(db, `modulos/${idModulo}`);
-            await update(referenciaEspecifica, datosActualizados);
+                    // Le agregamos Date.now() aquí también
+                    const rutaCarga = `cargas_modulos/${idModulo}_carga_${Date.now()}.jpg`;
+                    datosActualizados.url_imagen_carga = await subiraBunny(cargaEditComprimida, rutaCarga);
+                }
 
-            alert(`¡Módulo ${idModulo} actualizado exitosamente!`);
+                // 4. Actualizamos en Firebase (el método update solo cambia los campos que le mandemos, sin borrar los viejos)
+                btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando datos...';
+                const referenciaEspecifica = ref(db, `modulos/${idModulo}`);
+                await update(referenciaEspecifica, datosActualizados);
 
-            document.getElementById('modal-edit-module').classList.remove('active');
-            formEditModule.reset();
-            cargarTablaModulos();
+                alert(`¡Módulo ${idModulo} actualizado exitosamente!`);
 
-        } catch (error) {
-            console.error("Error al actualizar módulo:", error);
-            alert("Error al actualizar en la base de datos.");
-        } finally {
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = "Actualizar Módulo";
-        }
-    });
-}
+                document.getElementById('modal-edit-module').classList.remove('active');
+                formEditModule.reset();
+                cargarTablaModulos();
+
+            } catch (error) {
+                console.error("Error al actualizar módulo:", error);
+                alert("Error al actualizar en la base de datos.");
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = "Actualizar Módulo";
+            }
+        });
+    }
 }
 // ==========================================
 // GESTIÓN DE CATEGORÍAS
@@ -736,7 +750,7 @@ export async function cargarCategoriasSelect(contenedorId, categoriasGuardadas =
     try {
         const snapshot = await get(child(ref(db), "categorias_modulos"));
         contenedor.innerHTML = ''; // Limpiamos el texto de "Cargando..."
-        
+
         // Convertimos el texto "Salud, Tecnología" en un array ["Salud", "Tecnología"]
         const arrayCategorias = categoriasGuardadas.split(',').map(c => c.trim());
 
@@ -744,7 +758,7 @@ export async function cargarCategoriasSelect(contenedorId, categoriasGuardadas =
             snapshot.forEach(doc => {
                 const nombre = doc.val().nombre;
                 const isChecked = arrayCategorias.includes(nombre) ? 'checked' : '';
-                
+
                 // Inyectamos un checkbox por cada categoría
                 contenedor.innerHTML += `
                     <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem; color: #334155;">

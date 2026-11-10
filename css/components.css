@@ -23,11 +23,93 @@
 .big-number { font-size: 2.5rem; font-weight: bold; color: var(--itca-blue); margin-top: 0.5rem; }
 
 /* Tablas */
-.data-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-.data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
-.data-table th { background: #f9fafb; font-weight: 600; color: var(--text-muted); }
-.data-table tbody tr:hover { background: #f9fafb; }
+.data-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 0; /* Quitamos el margen superior para que se una limpio con la tarjeta */
+}
+.data-table th, .data-table td { 
+    padding: 1.2rem 1rem; /* Más espacio para respirar */
+    text-align: left; 
+    border-bottom: 1px solid var(--border-color); 
+    font-size: 0.95rem; 
+}
+.data-table th { 
+    background: #f8fafc; 
+    font-weight: 600; 
+    color: var(--text-muted); 
+    border-bottom: 2px solid #e2e8f0; /* Borde más fuerte para el encabezado */
+}
+.data-table tbody tr:hover { 
+    background: #f8fafc; 
+}
 
+/* Toolbar y Paginación */
+.toolbar { 
+    display: flex; 
+    gap: 1.5rem; /* Más separación entre buscador y filtro */
+    align-items: center; 
+    justify-content: space-between; 
+    flex-wrap: wrap; 
+    padding: 1rem 1.5rem; 
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.search-box { 
+    display: flex; 
+    gap: 0.5rem; 
+    flex: 1; 
+    min-width: 300px; /* Un poco más ancho para que no se aplaste */
+}
+/* Nuevo estilo para el buscador con ícono interno */
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+.search-input-wrapper i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+.search-box input { 
+    width: 100%; 
+    padding: 0.6rem 1rem 0.6rem 2.2rem; /* Espacio a la izquierda para el ícono */
+    border: 1px solid var(--border-color); 
+    border-radius: 6px; 
+    outline: none; 
+    transition: all 0.2s;
+}
+.search-box input:focus { 
+    border-color: var(--itca-blue); 
+    box-shadow: 0 0 0 3px rgba(0, 72, 153, 0.1);
+}
+.filter-box { 
+    display: flex; 
+    gap: 0.8rem; 
+    align-items: center; 
+}
+/* Paginación moderna tipo píldora */
+.pagination-controls { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 1rem 1.5rem; 
+    border-top: 1px solid var(--border-color); 
+    background-color: #f8fafc; /* Fondo suave para diferenciarlo de la tabla */
+    border-radius: 0 0 8px 8px;
+}
+.pagination-controls span { 
+    font-size: 0.95rem; 
+    color: #334155; 
+    font-weight: 600; 
+    background: white; 
+    padding: 0.4rem 1rem; 
+    border-radius: 20px; 
+    border: 1px solid var(--border-color);
+}
 /* Badges (Etiquetas de rol) */
 .badge { padding: 0.35rem 0.65rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; }
 .badge-admin { background-color: rgba(220, 38, 38, 0.1); color: var(--danger); }

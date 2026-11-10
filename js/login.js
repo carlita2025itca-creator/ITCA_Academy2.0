@@ -1,7 +1,8 @@
-// login.js
+// 1. Cambia las importaciones en la parte superior para usar FIRESTORE en lugar de database
 import { db, auth } from './firebase-config.js'; 
 import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { ref, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 export function initLogin() {
     console.log("✅ initLogin() ejecutado: Buscando el formulario en el HTML...");
 
@@ -13,88 +14,60 @@ export function initLogin() {
         return; 
     }
 
-    // Lógica de Ingreso
-    loginForm.addEventListener('submit', async (e) => {
+loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
       
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value; 
 
         try {
-            // =================================================================
-            // 1. INICIO DE SESIÓN CON FIREBASE AUTH
-            // =================================================================
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            console.log("✅ Firebase Auth aceptó las credenciales del usuario:", userCredential.user.uid);
+            console.log("✅ Auth exitoso:", userCredential.user.uid);
 
             // =================================================================
-            // 2. OBTENER DATOS DE LA BASE DE DATOS (Optimizado igual que Unity)
+            // 2. CONSULTAR FIRESTORE (Colección "administradores")
             // =================================================================
-            const usuariosRef = ref(db, "Usuarios");
-            
-            // Intento 1: Buscar el usuario por el campo "correo" (minúscula)
-            let consulta = query(usuariosRef, orderByChild("correo"), equalTo(email));
-            let snapshot = await get(consulta);
+            const adminsRef = collection(db, "administradores");
+            const q = query(adminsRef, where("correo", "==", email));
+            const querySnapshot = await getDocs(q);
 
-            // Intento 2: Si no lo encuentra, buscar por el campo "Correo" (mayúscula) - Tu Plan B
-            if (!snapshot.exists()) {
-                consulta = query(usuariosRef, orderByChild("Correo"), equalTo(email));
-                snapshot = await get(consulta);
-            }
-
-            // Si definitivamente no está en la base de datos
-            if (!snapshot.exists()) {
-                alert("⚠️ Error: Tu cuenta existe en Auth pero faltan tus datos en la Base de Datos.");
-                await signOut(auth); // Lo sacamos por seguridad
+            if (querySnapshot.empty) {
+                // Si tienes a los alumnos en otra colección, podrías repetir la búsqueda 
+                // aquí apuntando a collection(db, "usuarios") antes de bloquear el acceso.
+                alert("⚠️ Error: Tu cuenta existe en Auth pero faltan tus datos en Firestore.");
+                await signOut(auth);
                 return;
             }
 
-            // Extraer los datos del usuario que encontramos
+            // Extraer datos
             let usuarioValido = null;
-            snapshot.forEach(doc => {
-                // Como filtramos arriba, el documento que llega aquí es el correcto
-                usuarioValido = { id: doc.key, ...doc.val() };
+            querySnapshot.forEach(doc => {
+                usuarioValido = { id: doc.id, ...doc.data() };
             });
 
             if (usuarioValido) {
-                const rol = usuarioValido.Rol || usuarioValido.rol || 'rol_usuario';
+                // Convertir rol a minúsculas para validarlo sin problemas
+                const rolRaw = usuarioValido.rol || usuarioValido.Rol || 'rol_usuario';
+                const rol = rolRaw.toLowerCase();
 
-                // =================================================================
-                // 3. VERIFICAR PERMISOS PARA EL PANEL WEB
-                // =================================================================
-                if (rol === 'rol_administrador' || rol === 'rol_docente' || rol === 'admin' || rol === 'docente') {
+                if (rol === 'rol_administrador' || rol === 'rol_docente' || rol === 'admin' || rol === 'docente' || rol === 'administrador') {
                     
-                    // Guardar sesión localmente
+                    // Guardar sesión y redirigir
                     localStorage.setItem('sesionITCA', JSON.stringify(usuarioValido));
                     localStorage.setItem('rol', rol);
-                    localStorage.setItem('correo', usuarioValido.Correo || usuarioValido.correo);
+                    localStorage.setItem('correo', usuarioValido.correo);
                     
-                    if (typeof window.actualizarSesionGlobal === 'function') {
-                        window.actualizarSesionGlobal();
-                    }
-
-                    // Cargar módulos del Dashboard
-                    import('./dashboard.js').then(modulo => {
-                        if (modulo.actualizarDashboard) modulo.actualizarDashboard();
-                        // Pasamos directamente el 'email' capturado del formulario
-                        if (modulo.inicializarMenuPerfil) modulo.inicializarMenuPerfil({ email: email }, usuarioValido);
-                    }).catch(err => console.error("Error cargando dashboard:", err));
-                    
-                    import('./modulos.js').then(modulo => {
-                        if (modulo.cargarTablaModulos) modulo.cargarTablaModulos();
-                    }).catch(err => console.error("Error cargando modulos:", err));
-
-                    console.log("✅ Acceso concedido al Panel Web.");
+                    // ... (resto de tus importaciones para módulos y dashboard)
+                    console.log("✅ Acceso concedido.");
 
                 } else {
-                    alert("⛔ Acceso denegado. Tu cuenta no tiene permisos de administrador o docente.");
-                    await signOut(auth); // Lo sacamos porque es un alumno queriendo entrar al panel
+                    alert("⛔ Acceso denegado. No tienes permisos.");
+                    await signOut(auth);
                 }
             }
 
         } catch (error) {
-            // El error real en consola (para ti)
-            console.error("🚨 Error de autenticación: ", error);
+            console.error("🚨 Error:", error);
             
             // El mensaje amigable para el usuario
             if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {

@@ -1,10 +1,10 @@
-// 1. IMPORTACIONES CORREGIDAS PARA REALTIME DATABASE
+// 1. IMPORTACIONES
 import { db } from './firebase-config.js';
 import { ref, get, child, set, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { registrarAccion } from './historial.js';
 
 // 2. VARIABLES GLOBALES DEL MÓDULO
-let todosLosUsuarios = []; // Guardará todos los usuarios para paginar súper rápido en la web
+let todosLosUsuarios = []; 
 let usuariosFiltrados = [];
 let paginaActual = 0; 
 let rolesActualesFiltro = [];
@@ -12,13 +12,36 @@ let tablaActualId = '';
 const LIMITE_POR_PAGINA = 10;
 window.usuariosCargados = {}; 
 
-// Función para encriptar la contraseña en SHA-256 (Igual que en Unity)
+// ============================================================================
+// FUNCIONES UTILITARIAS Y DE VALIDACIÓN
+// ============================================================================
+
+// Encriptar la contraseña en SHA-256 (Igual que en Unity)
 async function encriptarSHA256(mensaje) {
     const encoder = new TextEncoder();
     const data = encoder.encode(mensaje);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Validar formato de Cédula Ecuatoriana (10 dígitos)
+function esCedulaValida(cedula) {
+    const regex = /^[0-9]{10}$/;
+    return regex.test(cedula);
+}
+
+// Validar formato de Correo Electrónico
+function esCorreoValido(correo) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(correo);
+}
+
+// Capitalizar nombres (ej. "juan pérez" -> "Juan Pérez")
+function formatearNombreCompleto(texto) {
+    return texto.trim().split(' ').map(palabra => 
+        palabra.charAt(0).toUpperCase() + palabra.slice(1).toLowerCase()
+    ).join(' ');
 }
 
 // ============================================================================
@@ -42,10 +65,9 @@ export async function cargarTablaUsuarios(rolesAFiltrar, tableBodyId, reset = tr
     if(btnNext) btnNext.disabled = true;
 
     try {
-        // Si es la primera vez o forzamos reset, descargamos de la base de datos
         if (reset || todosLosUsuarios.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Cargando base de datos...</td></tr>`;
-            const snapshot = await get(child(ref(db), "Usuarios")); // Asegúrate de que el nodo se llame "Usuarios"
+            tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center;">Cargando registros desde la base de datos...</td></tr>`;
+            const snapshot = await get(child(ref(db), "Usuarios")); 
             
             todosLosUsuarios = [];
             window.usuariosCargados = {};
@@ -53,7 +75,6 @@ export async function cargarTablaUsuarios(rolesAFiltrar, tableBodyId, reset = tr
             if (snapshot.exists()) {
                 snapshot.forEach(doc => {
                     const data = doc.val();
-                    // Normalizamos los datos por si Unity los guardó con Mayúsculas iniciales
                     const userObj = {
                         id: doc.key,
                         nombres: data.Nombre || data.nombres || '',
@@ -83,7 +104,7 @@ export async function cargarTablaUsuarios(rolesAFiltrar, tableBodyId, reset = tr
         tableBody.innerHTML = '';
 
         if (usuariosPagina.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No se encontraron registros.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #64748b;">No se encontraron registros.</td></tr>';
         } else {
             usuariosPagina.forEach((data) => {
                 const nombreCompleto = `${data.nombres} ${data.apellidos}`.trim();
@@ -116,8 +137,8 @@ export async function cargarTablaUsuarios(rolesAFiltrar, tableBodyId, reset = tr
         if(btnNext) btnNext.disabled = (paginaActual >= totalPaginas - 1);
 
     } catch (error) {
-        console.error("Error cargando la tabla:", error);
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Error al cargar los datos.</td></tr>';
+        console.error("Error al cargar la tabla de usuarios:", error);
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger);">Ocurrió un error de conexión al cargar los datos.</td></tr>';
     }
 }
 
@@ -126,8 +147,7 @@ export async function cargarTablaUsuarios(rolesAFiltrar, tableBodyId, reset = tr
 // ============================================================================
 export function initUsuariosModule() {
     
-   // 🚀 --- ¡NUEVO! 0. LLAMADA INICIAL AL CARGAR EL MÓDULO ---
-    // Esto enciende la tabla automáticamente apenas el administrador entra a la pantalla
+    // Llamada inicial
     cargarTablaUsuarios(
         ['usuario', 'docente', 'admin', 'administrador', 'rol_usuario', 'rol_docente', 'rol_administrador'], 
         'users-table-body', 
@@ -138,13 +158,13 @@ export function initUsuariosModule() {
     document.getElementById('btn-prev')?.addEventListener('click', () => {
         if (paginaActual > 0) {
             paginaActual--;
-            cargarTablaUsuarios(rolesActualesFiltro, tablaActualId, false); // Aquí sí va false para no perder el filtro
+            cargarTablaUsuarios(rolesActualesFiltro, tablaActualId, false); 
         }
     });
 
     document.getElementById('btn-next')?.addEventListener('click', () => {
         paginaActual++;
-        cargarTablaUsuarios(rolesActualesFiltro, tablaActualId, false); // Aquí sí va false
+        cargarTablaUsuarios(rolesActualesFiltro, tablaActualId, false); 
     });
 
     // --- 2. MODAL Y FORMULARIO: AGREGAR USUARIO ---
@@ -157,19 +177,28 @@ export function initUsuariosModule() {
    formAddUser?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btnSave = document.getElementById('btn-save-user');
-        btnSave.textContent = 'Guardando...';
-        btnSave.disabled = true;
 
         try {
-            const nombres = document.getElementById('new-nombres').value.trim();
-            const apellidos = document.getElementById('new-apellidos').value.trim();
+            // Captura y normalización de datos
+            const nombres = formatearNombreCompleto(document.getElementById('new-nombres').value);
+            const apellidos = formatearNombreCompleto(document.getElementById('new-apellidos').value);
             const cedula = document.getElementById('new-cedula').value.trim();
             const correo = document.getElementById('new-correo').value.trim().toLowerCase();
             const rol = document.getElementById('new-rol').value;
 
-            // 1. VERIFICACIÓN DE DUPLICADOS EN LA BASE DE DATOS
-            const usuariosRef = ref(db, 'Usuarios');
-            const snapshot = await get(usuariosRef);
+            // Validaciones Estrictas
+            if (!esCedulaValida(cedula)) {
+                return Swal.fire('Formato Inválido', 'La cédula debe contener exactamente 10 dígitos numéricos.', 'warning');
+            }
+            if (!esCorreoValido(correo)) {
+                return Swal.fire('Formato Inválido', 'Por favor ingresa un correo electrónico válido.', 'warning');
+            }
+
+            btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            btnSave.disabled = true;
+
+            // 1. VERIFICACIÓN DE DUPLICADOS
+            const snapshot = await get(ref(db, 'Usuarios'));
 
             if (snapshot.exists()) {
                 let existeCedula = false;
@@ -177,26 +206,23 @@ export function initUsuariosModule() {
 
                 snapshot.forEach((childSnapshot) => {
                     const data = childSnapshot.val();
-                    // Comparamos cédula y correo
                     if (data.Cedula === cedula) existeCedula = true;
-                    if ((data.Correo || data.correo || '').toLowerCase() === correo) existeCorreo = true;
+                    if ((data.Correo || '').toLowerCase() === correo) existeCorreo = true;
                 });
 
                 if (existeCedula) {
-                    alert("⚠️ Error: Ya existe un usuario registrado con esta cédula.");
                     btnSave.disabled = false;
                     btnSave.textContent = 'Guardar Usuario';
-                    return; // Detenemos la ejecución
+                    return Swal.fire('Conflicto de Datos', 'Ya existe un usuario registrado con esta cédula.', 'error');
                 }
                 if (existeCorreo) {
-                    alert("⚠️ Error: Ya existe un usuario registrado con este correo electrónico.");
                     btnSave.disabled = false;
                     btnSave.textContent = 'Guardar Usuario';
-                    return; // Detenemos la ejecución
+                    return Swal.fire('Conflicto de Datos', 'Ya existe un usuario registrado con este correo electrónico.', 'error');
                 }
             }
 
-            // 2. SI NO EXISTE, PROCEDEMOS A GUARDAR
+            // 2. PROCEDEMOS A GUARDAR
             const passwordEncriptada = await encriptarSHA256(cedula);
 
             const nuevoUsuario = {
@@ -214,12 +240,13 @@ export function initUsuariosModule() {
             formAddUser.reset();
             modalAddUser.classList.remove('active');
             cargarTablaUsuarios(rolesActualesFiltro, tablaActualId, true);
-            alert("Usuario agregado exitosamente.");
+            
+            Swal.fire('¡Éxito!', 'Usuario agregado correctamente a la plataforma.', 'success');
             registrarAccion('CREAR', 'Usuarios', `Registró un nuevo usuario con cédula: ${cedula}`);
             
         } catch (error) {
             console.error("Error al agregar usuario:", error);
-            alert("Ocurrió un error al guardar en la base de datos.");
+            Swal.fire('Error del Servidor', 'No se pudo guardar el registro en la base de datos.', 'error');
         } finally {
             btnSave.textContent = 'Guardar Usuario';
             btnSave.disabled = false;
@@ -235,29 +262,41 @@ export function initUsuariosModule() {
     formEditUser?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btnUpdate = document.getElementById('btn-update-user');
-        btnUpdate.textContent = 'Actualizando...';
-        btnUpdate.disabled = true;
 
         try {
             const idDocumento = document.getElementById('edit-id').value;
+            const cedula = document.getElementById('edit-cedula').value.trim();
+            const correo = document.getElementById('edit-correo').value.trim().toLowerCase();
             const rolSelect = document.getElementById('edit-rol').value;
-            
-            // Actualizamos en RTDB
+
+            // Validaciones Estrictas
+            if (!esCedulaValida(cedula)) {
+                return Swal.fire('Formato Inválido', 'La cédula debe contener exactamente 10 dígitos numéricos.', 'warning');
+            }
+            if (!esCorreoValido(correo)) {
+                return Swal.fire('Formato Inválido', 'Por favor ingresa un correo electrónico válido.', 'warning');
+            }
+
+            btnUpdate.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+            btnUpdate.disabled = true;
+
             await update(ref(db, `Usuarios/${idDocumento}`), {
-                Nombre: document.getElementById('edit-nombres').value.trim(),
-                Apellido: document.getElementById('edit-apellidos').value.trim(),
-                Cedula: document.getElementById('edit-cedula').value.trim(),
-                Correo: document.getElementById('edit-correo').value.trim(),
+                Nombre: formatearNombreCompleto(document.getElementById('edit-nombres').value),
+                Apellido: formatearNombreCompleto(document.getElementById('edit-apellidos').value),
+                Cedula: cedula,
+                Correo: correo,
                 Rol: rolSelect.startsWith('rol_') ? rolSelect : `rol_${rolSelect}`
             });
 
             modalEditUser.classList.remove('active');
-            cargarTablaUsuarios(rolesActualesFiltro, tablaActualId, true); // Forzamos true para recargar caché
-            alert("Usuario actualizado correctamente.");
-            registrarAccion('EDITAR', 'Usuarios', `Actualizó los datos de la cédula: ${document.getElementById('edit-cedula').value}`);
+            cargarTablaUsuarios(rolesActualesFiltro, tablaActualId, true); 
+            
+            Swal.fire('¡Actualizado!', 'Los datos del usuario se modificaron con éxito.', 'success');
+            registrarAccion('EDITAR', 'Usuarios', `Actualizó los datos de la cédula: ${cedula}`);
+            
         } catch (error) {
-            console.error("Error actualizando:", error);
-            alert("Ocurrió un error al actualizar los datos.");
+            console.error("Error actualizando usuario:", error);
+            Swal.fire('Error del Servidor', 'No se pudo actualizar el registro.', 'error');
         } finally {
             btnUpdate.textContent = 'Actualizar Datos';
             btnUpdate.disabled = false;
@@ -277,7 +316,6 @@ export function initUsuariosModule() {
 
     filterRole?.addEventListener('change', (e) => {
         const rol = e.target.value;
-        // 🚀 ¡CORRECCIÓN AQUÍ! Cambiamos 'false' por 'true' para que el filtro limpie la página a 0 y aplique los nuevos roles
         if (rol === 'todos') {
             cargarTablaUsuarios(
                 ['usuario', 'docente', 'admin', 'administrador', 'rol_usuario', 'rol_docente', 'rol_administrador'], 
@@ -290,23 +328,22 @@ export function initUsuariosModule() {
     });
 
     document.getElementById('btn-search')?.addEventListener('click', () => {
-        const cedula = searchCedula.value.trim().toLowerCase();
-        if (cedula !== '') {
+        const cedulaBuscada = searchCedula.value.trim().toLowerCase();
+        if (cedulaBuscada !== '') {
             btnClearSearch.style.display = 'inline-block';
             
-            // Búsqueda local en caché (súper rápido)
-            const resultado = todosLosUsuarios.filter(u => u.cedula.toLowerCase().includes(cedula));
-            
+            const resultado = todosLosUsuarios.filter(u => u.cedula.toLowerCase().includes(cedulaBuscada));
             const tableBody = document.getElementById('users-table-body');
             tableBody.innerHTML = '';
             
             if(resultado.length === 0) {
-                return tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No se encontró usuario con esa cédula.</td></tr>';
+                return tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No se encontró ningún registro que coincida con esa búsqueda.</td></tr>';
             }
 
             resultado.forEach(data => {
                 const nombreCompleto = `${data.nombres} ${data.apellidos}`.trim();
                 const rolMostrar = data.rol.replace('rol_', '').toUpperCase();
+                const fechaMostrar = data.fechaRegistro ? new Date(data.fechaRegistro).toLocaleDateString() : '---';
                 
                 tableBody.innerHTML += `
                     <tr>
@@ -314,7 +351,7 @@ export function initUsuariosModule() {
                         <td>${data.cedula}</td>
                         <td>${data.correo}</td>
                         <td><span class="badge badge-${rolMostrar.toLowerCase()}">${rolMostrar}</span></td>
-                        <td>---</td>
+                        <td style="font-size: 0.85rem; color: #64748b;">${fechaMostrar}</td>
                         <td>
                             <div class="action-buttons">
                                 <button class="btn-icon edit" title="Editar Usuario" onclick="abrirModalEditar('${data.id}')">✏️</button>
@@ -356,34 +393,56 @@ export function initUsuariosModule() {
     };
 
     window.eliminarUsuario = async function(idDocumento, nombre) {
-        if(confirm(`¿Estás seguro de eliminar a ${nombre}? Esta acción es irreversible.`)) {
+        const confirmacion = await Swal.fire({
+            title: '¿Confirmar Eliminación?',
+            html: `Estás a punto de eliminar del sistema al usuario <b>${nombre}</b>.<br><br>Esta acción es permanente y no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if(confirmacion.isConfirmed) {
+            Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
             try {
                 await remove(ref(db, `Usuarios/${idDocumento}`));
-                alert("Usuario eliminado exitosamente.");
+                Swal.fire('¡Eliminado!', 'El registro fue borrado exitosamente.', 'success');
                 registrarAccion('ELIMINAR', 'Usuarios', `Eliminó del sistema al usuario: ${nombre} (${idDocumento})`);
                 cargarTablaUsuarios(rolesActualesFiltro, tablaActualId, true);
             } catch (error) {
-                console.error("Error al eliminar:", error);
-                alert("Error al eliminar el registro.");
+                console.error("Error al eliminar registro:", error);
+                Swal.fire('Error', 'No se pudo eliminar el registro.', 'error');
             }
         }
     };
 
     window.restablecerPassword = async function(idDocumento, nombre) {
-        if(confirm(`¿Deseas restablecer la contraseña de ${nombre}? Su nueva contraseña pasará a ser su número de cédula.`)) {
+        const confirmacion = await Swal.fire({
+            title: 'Restablecer Contraseña',
+            html: `¿Confirmas restablecer los accesos para <b>${nombre}</b>?<br>Su nueva contraseña será su número de cédula.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0284c7',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Sí, restablecer',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if(confirmacion.isConfirmed) {
+            Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
             try {
-                // Encriptamos la misma cédula para usarla de contraseña
                 const nuevaPasswordEncriptada = await encriptarSHA256(idDocumento);
-                
                 await update(ref(db, `Usuarios/${idDocumento}`), {
                     Password: nuevaPasswordEncriptada
                 });
                 
-                alert(`Contraseña de ${nombre} restablecida con éxito. La nueva clave es: ${idDocumento}`);
+                Swal.fire('¡Contraseña Actualizada!', `Los accesos fueron restablecidos.<br>Nueva clave: <b>${idDocumento}</b>`, 'success');
                 registrarAccion('EDITAR', 'Usuarios', `Restableció la contraseña del usuario: ${idDocumento}`);
             } catch (error) {
-                console.error("Error restableciendo clave:", error);
-                alert("Hubo un error al intentar restablecer la contraseña.");
+                console.error("Error al restablecer contraseña:", error);
+                Swal.fire('Error', 'Hubo un error al intentar cambiar la contraseña.', 'error');
             }
         }
     };
@@ -409,8 +468,7 @@ window.exportarUsuariosExcel = () => {
     });
 
     if (datosParaExcel.length === 0) {
-        alert("No hay registros visibles en la tabla para exportar. Verifica tus filtros.");
-        return;
+        return Swal.fire('Exportación Vacía', 'No hay registros visibles en la tabla para exportar. Verifica tus filtros.', 'info');
     }
 
     try {
@@ -419,14 +477,14 @@ window.exportarUsuariosExcel = () => {
         XLSX.utils.book_append_sheet(libro, hoja, "Usuarios Filtrados");
 
         const fechaHoy = new Date().toLocaleDateString().replace(/\//g, '-');
-        XLSX.writeFile(libro, `Usuarios_ITCA_Filtrados_${fechaHoy}.xlsx`);
+        XLSX.writeFile(libro, `Reporte_Usuarios_ITCA_${fechaHoy}.xlsx`);
 
         import('./historial.js').then(m => {
-            m.registrarAccion('EXPORTAR', 'Usuarios', `Descargó Excel con ${datosParaExcel.length} usuarios filtrados.`);
+            m.registrarAccion('EXPORTAR', 'Usuarios', `Descargó reporte Excel con ${datosParaExcel.length} registros de usuarios.`);
         });
 
     } catch (error) {
-        console.error("Error al generar Excel:", error);
-        alert("Hubo un error al intentar crear el archivo.");
+        console.error("Error durante exportación a Excel:", error);
+        Swal.fire('Error', 'No se pudo generar el archivo Excel.', 'error');
     }
 };

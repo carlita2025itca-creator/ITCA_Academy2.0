@@ -73,9 +73,7 @@
                 <button class="nav-item" data-target="view-tam">
                     <i class="fas fa-clipboard-check"></i> Evaluación TAM
                 </button>
-                <button class="nav-item" data-target="view-analytics">
-                    <i class="fas fa-chart-line"></i> Estadísticas de Módulos
-                </button>
+                
                 <button class="nav-item" data-target="view-history"><i class="fas fa-history"></i> Historial cambios
 
 
@@ -193,69 +191,84 @@
                 </section>
                 <!-- VISTA: USUARIOS ------------------------------------------------------------------------------------------>
                 <!------------------------------------------------------------------------------------------------------------>
-                <section id="view-users" class="view-section">
-                    <div class="section-header">
-                        <h1>Gestión de Usuarios</h1>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="exportarUsuariosExcel()" class="btn-action"
-                                style="background-color: #166534; color: white; border: none;">
-                                <i class="fas fa-file-excel"></i> Descargar Excel
-                            </button>
-                            <button id="btn-open-modal" class="btn-primary"
-                                style="width: auto; padding: 0.6rem 1.5rem;">
-                                + Nuevo Usuario
-                            </button>
-                        </div>
-                    </div>
+              <section id="view-users" class="view-section">
+    <div class="section-header">
+        <h1>Gestión de Usuarios</h1>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <!-- Botón Excel mejorado con colores corporativos suaves -->
+            <button onclick="exportarUsuariosExcel()" class="btn-action" style="color: #15803d; border-color: #15803d; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-file-excel"></i> Exportar
+            </button>
+            <button id="btn-open-modal" class="btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-user-plus"></i> Nuevo Usuario
+            </button>
+        </div>
+    </div>
 
-                    <!-- Barra de Herramientas (Buscador y Filtros) -->
-                    <div class="toolbar card" style="margin-bottom: 1.5rem;">
-                        <div class="search-box">
-                            <input type="text" id="search-cedula" placeholder="Buscar por Cédula exacta...">
-                            <button id="btn-search" class="btn-action">🔍 Buscar</button>
-                            <button id="btn-clear-search" class="btn-action" style="display:none;">✖ Limpiar</button>
-                        </div>
-                        <div class="filter-box">
-                            <label for="filter-role" style="font-size: 0.9rem; font-weight: 500;">Filtrar Rol:</label>
-                            <select id="filter-role" class="input-select">
-                                <option value="todos">Todos los roles</option>
-                                <option value="usuario">Solo Usuarios</option>
-                                <option value="docente">Solo Docentes</option>
-                                <option value="admin">Solo Administradores</option>
-                            </select>
-                        </div>
-                    </div>
+    <!-- Barra de Herramientas (Buscador y Filtros) -->
+    <div class="toolbar card" style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; justify-content: space-between;">
+        
+        <!-- Buscador Moderno -->
+        <div class="search-box" style="flex: 1; min-width: 300px; display: flex; gap: 8px;">
+            <div style="position: relative; flex: 1;">
+                <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                <input type="text" id="search-cedula" placeholder="Buscar por número de cédula..." style="width: 100%; padding: 0.6rem 1rem 0.6rem 2.2rem; border: 1px solid #cbd5e1; border-radius: 6px; outline: none;">
+            </div>
+            <button id="btn-search" class="btn-primary" style="padding: 0.6rem 1.2rem; width: auto;">Buscar</button>
+            <button id="btn-clear-search" class="btn-action" style="display:none; color: #ef4444; border-color: #ef4444;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
 
-                    <div class="card">
-                        <div class="table-responsive">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Nombre Completo</th>
-                                        <th>Cédula</th>
-                                        <th>Correo</th>
-                                        <th>Rol</th>
-                                        <th>Fecha de Registro</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="users-table-body">
-                                    <tr>
-                                        <td colspan="6" style="text-align: center;">Cargando datos...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- Controles de Paginación -->
-                        <div class="pagination-controls">
-                            <button id="btn-prev" class="btn-action" disabled>⬅️ Anterior</button>
-                            <span id="page-info">Página 1</span>
-                            <button id="btn-next" class="btn-action" disabled>Siguiente ➡️</button>
-                        </div>
+        <!-- Filtro Elegante -->
+        <div class="filter-box" style="display: flex; align-items: center; gap: 10px;">
+            <label for="filter-role" style="font-size: 0.9rem; font-weight: 600; color: #475569;">
+                <i class="fas fa-filter" style="margin-right: 4px;"></i> Rol:
+            </label>
+            <select id="filter-role" class="input-select" style="padding: 0.5rem 2rem 0.5rem 1rem; border-color: #cbd5e1; border-radius: 6px; font-weight: 500;">
+                <option value="todos">Todos los usuarios</option>
+                <option value="usuario">Solo Usuarios</option>
+                <option value="docente">Solo Docentes</option>
+                <option value="admin">Solo Administradores</option>
+            </select>
+        </div>
+    </div>
 
-                    </div>
-
-                </section>
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-responsive" style="margin-top: 0;">
+            <table class="data-table">
+                <thead style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <tr>
+                        <th style="padding: 1.2rem 1rem;">Nombre Completo</th>
+                        <th>Cédula</th>
+                        <th>Correo</th>
+                        <th>Rol</th>
+                        <th>Fecha de Registro</th>
+                        <th style="text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">
+                            <i class="fas fa-circle-notch fa-spin" style="margin-right: 8px;"></i> Cargando datos...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Controles de Paginación Profesionales -->
+        <div class="pagination-controls" style="padding: 1rem 1.5rem; background-color: #f8fafc; border-top: 1px solid #e2e8f0; margin-top: 0;">
+            <button id="btn-prev" class="btn-action" disabled style="display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-chevron-left"></i> Anterior
+            </button>
+            <span id="page-info" style="font-weight: 600; color: #334155; background: white; padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid #e2e8f0;">Página 1</span>
+            <button id="btn-next" class="btn-action" disabled style="display: flex; align-items: center; gap: 6px;">
+                Siguiente <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</section>
 
                 <!-- MODAL AGREGAR USUARIO (Copiado al final de tu <main>, antes de cerrar </main>) -->
                 <div id="modal-add-user" class="modal">
@@ -358,9 +371,16 @@
 
                         <div class="card">
                             <div class="toolbar">
-                                <div class="search-box">
-                                    <input type="text" id="search-module" placeholder="Buscar módulo...">
-                                </div>
+                               <div class="search-box">
+    <div class="search-input-wrapper">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-cedula" placeholder="Buscar por número de cédula...">
+    </div>
+    <button id="btn-search" class="btn-primary" style="width: auto;">Buscar</button>
+    <button id="btn-clear-search" class="btn-action" style="display:none; color: #ef4444; border-color: #ef4444;">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
                             </div>
                             <div class="table-responsive">
                                 <table class="data-table">
@@ -369,6 +389,7 @@
                                             <th style="width: 60px; text-align: center;">Portada</th>
                                             <!-- Nueva columna -->
                                             <th>ID</th>
+                                            
                                             <th>Módulo</th>
                                             <th style="text-align: center;">Preguntas asignadas para evaluación</th>
                                             <th>Estado</th>
@@ -670,6 +691,9 @@
                         </div>
                         <form id="form-edit-module">
                             <div class="modal-footer" style="margin-bottom: 25px;">
+                                <button type="button" id="btn-delete-module-inside" style="background-color: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+        <i class="fas fa-trash"></i> Eliminar Módulo
+    </button>
                                 <button type="button" class="btn-action" id="btn-cancel-edit-mod">Cancelar</button>
                                 <button type="submit" class="btn-save">Actualizar Módulo</button>
                             </div>
