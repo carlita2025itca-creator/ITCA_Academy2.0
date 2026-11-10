@@ -149,7 +149,7 @@ export function initUsuariosModule() {
     
     // Llamada inicial
     cargarTablaUsuarios(
-        ['usuario', 'docente', 'admin', 'administrador', 'rol_usuario', 'rol_docente', 'rol_administrador'], 
+        ['usuario', 'docente', 'admin', 'administrador', 'rol_usuario', 'rol_docente', 'rol_admin'], 
         'users-table-body', 
         true
     );
@@ -318,7 +318,7 @@ export function initUsuariosModule() {
         const rol = e.target.value;
         if (rol === 'todos') {
             cargarTablaUsuarios(
-                ['usuario', 'docente', 'admin', 'administrador', 'rol_usuario', 'rol_docente', 'rol_administrador'], 
+                ['usuario', 'docente', 'admin', 'administrador', 'rol_usuario', 'rol_docente', 'rol_admin'], 
                 'users-table-body', 
                 true
             );

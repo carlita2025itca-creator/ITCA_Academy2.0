@@ -65,9 +65,9 @@ export async function cargarTablaModulos() {
                 const data = childSnapshot.val();
 
                 // ==============================================
-                // 2. ENCENDEMOS LOS BOTONES SOLO SI ES ROL_ADMINISTRADOR
+                // 2. ENCENDEMOS LOS BOTONES SOLO SI ES ROL_ADMIN
                 // ==============================================
-                const esAdmin = (rolActual === 'rol_administrador');
+                const esAdmin = (rolActual === 'rol_admin');
 
                 const btnAdd = document.getElementById('btn-add-module');
                 const btnExportar = document.getElementById('btn-exportar-modulos');
@@ -135,7 +135,7 @@ export async function cargarTablaModulos() {
     </a>
 `;
 
-            const esAdmin = (rolActual === 'superadmin' || rolActual === 'admin' || rolActual === 'rol_administrador');
+            const esAdmin = (rolActual === 'superadmin' || rolActual === 'admin' || rolActual === 'rol_admin');
             const menuDropdown = esAdmin ? (botonPreguntas + botonesAdminExtra) : botonPreguntas;
             // =========================================================
             const cantidadEvaluacion = data.cantidadPreguntas || 0;

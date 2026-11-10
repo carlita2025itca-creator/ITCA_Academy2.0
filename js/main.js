@@ -32,7 +32,7 @@ const viewSections = document.querySelectorAll('.view-section');
 // ==========================================
 window.aplicarSeguridadMenu = () => {
     const rolActual = (window.rolUsuarioActual || localStorage.getItem('rol') || '').toLowerCase().trim();
-    const esAdmin = (rolActual === 'rol_administrador');
+    const esAdmin = (rolActual === 'rol_admin');
 
     // Capturamos los botones directamente por su atributo data-target (sin necesidad de IDs)
     const btnUsuarios = document.querySelector('[data-target="view-users"]');
@@ -126,7 +126,7 @@ navItems.forEach(item => {
     item.addEventListener('click', (e) => {
         const targetId = e.currentTarget.getAttribute('data-target');
         const rolActual = (window.rolUsuarioActual || localStorage.getItem('rol') || '').toLowerCase().trim();
-        const esAdmin = (rolActual === 'rol_administrador');
+        const esAdmin = (rolActual === 'rol_admin');
 
         // 🛡️ CANDADO ESTRICTO: Si no es admin y toca una ruta prohibida, se bloquea la acción.
         if (!esAdmin && (targetId === 'view-users' || targetId === 'view-admins' || targetId === 'view-history')) {
@@ -152,10 +152,10 @@ navItems.forEach(item => {
             actualizarDashboard();
         }
         else if(targetId === 'view-users') {
-            cargarTablaUsuarios(['usuario', 'docente', 'admin', 'rol_usuario', 'rol_docente', 'rol_administrador'], 'users-table-body', false);
+            cargarTablaUsuarios(['usuario', 'docente', 'admin', 'rol_usuario', 'rol_docente', 'rol_admin'], 'users-table-body', false);
         } 
         else if (targetId === 'view-admins') {
-            cargarTablaUsuarios(['admin', 'rol_administrador'], 'admins-table-body', false);
+            cargarTablaUsuarios(['admin', 'rol_admin'], 'admins-table-body', false);
         } 
         else if (targetId === 'view-modules') {
             cargarTablaModulos(); 

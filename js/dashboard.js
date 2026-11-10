@@ -39,7 +39,7 @@ export async function actualizarDashboard() {
                 totalUsuarios++;
                 const data = doc.val();
                 const rol = (data.Rol || data.rol || '').toLowerCase();
-                if (rol === 'rol_administrador' || rol === 'admin') {
+                if (rol === 'rol_admin' || rol === 'admin') {
                     totalAdmins++;
                 }
             });

@@ -122,7 +122,7 @@ async function cargarTablaPreguntas() {
 // ==========================================
 function verificarPermisoCategoria() {
     const rolActual = (window.rolUsuarioActual || localStorage.getItem('rol') || '').toLowerCase().trim();
-    const esAdmin = (rolActual === 'superadmin' || rolActual === 'admin' || rolActual === 'rol_administrador');
+    const esAdmin = (rolActual === 'superadmin' || rolActual === 'admin' || rolActual === 'rol_admin');
     const btnAddCat = document.getElementById('btn-add-cat-pregunta');
     
     if (btnAddCat) {
